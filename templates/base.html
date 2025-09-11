@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SSimple</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" 
+          rel="stylesheet" 
+          integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" 
+          crossorigin="anonymous">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" 
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+    <style>
+      /* Sidebar styling */
+      .sidebar {
+        min-height: 100vh;
+      }
+      @media (max-width: 767.98px) {
+        .sidebar {
+          min-height: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Sidebar toggle for mobile -->
+    <div class="container-fluid">
+      <div class="row">
+        
+        <!-- Toggle button only visible on small screens -->
+        <div class="d-md-none bg-body-tertiary p-2">
+          <button class="btn btn-outline-primary w-100 mb-2" 
+                  type="button" 
+                  data-bs-toggle="collapse" 
+                  data-bs-target="#sidebarMenu">
+            ☰ Menu
+          </button>
+        </div>
+        
+        <!-- Sidebar -->
+        <nav id="sidebarMenu" 
+             class="col-md-3 col-lg-2 d-md-block bg-body-tertiary sidebar collapse p-3">
+          <a href="/" 
+             class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-decoration-none">
+            <i class="bi bi-bootstrap-fill me-2 fs-3"></i>
+            <span class="fs-4">SSimple</span>
+          </a>
+          <hr>
+          <ul class="nav nav-pills flex-column mb-auto">
+            <li>
+              <a href="/" 
+                 class="nav-link {{ 'active' if active_page == 'dashboard' else 'link-body-emphasis' }}">
+                <i class="bi bi-speedometer2 me-2"></i>
+                Dashboard
+              </a>
+            </li>
+            <li>
+              <a href="/students" 
+                 class="nav-link {{ 'active' if active_page == 'students' else 'link-body-emphasis' }}">
+                <i class="bi bi-table me-2"></i>
+                Students
+              </a>
+            </li>
+            <li>
+              <a href="/programs" 
+                 class="nav-link {{ 'active' if active_page == 'programs' else 'link-body-emphasis' }}">
+                <i class="bi bi-grid me-2"></i>
+                Programs
+              </a>
+            </li>
+            <li>
+              <a href="/colleges" 
+                 class="nav-link {{ 'active' if active_page == 'colleges' else 'link-body-emphasis' }}">
+                <i class="bi bi-people-fill me-2"></i>
+                Colleges
+              </a>
+            </li>
+          </ul>
+          <hr>
+          <div class="dropdown">
+            <a href="#" 
+               class="d-flex align-items-center text-decoration-none dropdown-toggle" 
+               data-bs-toggle="dropdown" aria-expanded="false">
+              <img src="https://via.placeholder.com/32" 
+                   alt="profile" 
+                   width="32" height="32" 
+                   class="rounded-circle me-2">
+              <strong>Nights</strong>
+            </a>
+            <ul class="dropdown-menu text-small shadow">
+              <li><a class="dropdown-item" href="#">New project...</a></li>
+              <li><a class="dropdown-item" href="#">Settings</a></li>
+              <li><a class="dropdown-item" href="#">Profile</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="#">Sign out</a></li>
+            </ul>
+          </div>
+        </nav>
+
+        <!-- Main content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+          {% block content %}{% endblock %}
+        </main>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" 
+            integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" 
+            crossorigin="anonymous"></script>
+  </body>
+</html>
