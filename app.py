@@ -16,3 +16,14 @@ def students():
         {"id": "2023-0005", "first_name": "Sophia", "last_name": "Garcia", "course": "BSN", "year": "2", "gender": "Female"},
     ]
     return render_template("students.html", students=students, active_page="students")
+
+@app.route("/colleges")
+def colleges():
+    colleges = [
+        {"code": "CSE", "name": "College of Computer Science and Engineering"},
+        {"code": "CAS", "name": "College of Arts and Sciences"},
+        {"code": "COE", "name": "College of Education"},
+        {"code": "CBM", "name": "College of Business Management"},
+        {"code": "CHS", "name": "College of Health Sciences"},
+    ]
+    return render_template("colleges.html", colleges=colleges, active_page="colleges")
