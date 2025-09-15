@@ -17,6 +17,20 @@ def students():
     ]
     return render_template("students.html", students=students, active_page="students")
 
+@app.route("/programs")
+def programs():
+    programs = [
+        {"code": "BSCS", "name": "Bachelor of Science in Computer Science", "college": {"name": "College of Computing"}},
+        {"code": "BSIT", "name": "Bachelor of Science in Information Technology", "college": {"name": "College of Computing"}},
+        {"code": "BSEE", "name": "Bachelor of Science in Electrical Engineering", "college": {"name": "College of Engineering"}},
+        {"code": "BSME", "name": "Bachelor of Science in Mechanical Engineering", "college": {"name": "College of Engineering"}},
+        {"code": "BSN", "name": "Bachelor of Science in Nursing", "college": {"name": "College of Health Sciences"}},
+        {"code": "BSA", "name": "Bachelor of Science in Accountancy", "college": {"name": "College of Business"}},
+        {"code": "BSBA", "name": "Bachelor of Science in Business Administration", "college": {"name": "College of Business"}},
+        {"code": "ABENG", "name": "Bachelor of Arts in English", "college": {"name": "College of Arts and Letters"}},
+    ]
+    return render_template("programs.html", programs=programs, active_page="programs")
+
 @app.route("/colleges")
 def colleges():
     colleges = [

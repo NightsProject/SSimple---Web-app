@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+
+  <!-- Search and Sort Controls -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <!-- Search -->
+    <form class="d-flex" role="search" method="get">
+      <input class="form-control me-2" 
+             type="search" 
+             placeholder="Search Programs..." 
+             name="q" 
+             value="{{ request.args.get('q', '') }}">
+      <button class="btn btn-outline-primary" type="submit">Search</button>
+    </form>
+
+    <!-- Sort -->
+    <form method="get">
+      <select class="form-select" name="sort" onchange="this.form.submit()">
+        <option value="code" {% if request.args.get('sort') == 'code' %}selected{% endif %}>Sort by Code</option>
+        <option value="name" {% if request.args.get('sort') == 'name' %}selected{% endif %}>Sort by Name</option>
+        <option value="college" {% if request.args.get('sort') == 'college' %}selected{% endif %}>Sort by College</option>
+      </select>
+    </form>
+  </div>
+
+  <!-- Table -->
+  <div class="table-responsive">
+    <table class="table table-striped table-hover">
+      <thead>
+        <tr>
+          <th scope="col">#</th>
+          <th scope="col">Code</th>
+          <th scope="col">Name</th>
+          <th scope="col">College</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for program in programs %}
+        <tr>
+          <th scope="row">{{ loop.index }}</th>
+          <td>{{ program.code }}</td>
+          <td>{{ program.name }}</td>
+          <td>{{ program.college.name }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <nav aria-label="Program pagination">
+    <ul class="pagination justify-content-center">
+      <li class="page-item {% if not prev_url %}disabled{% endif %}">
+        <a class="page-link" href="{{ prev_url or '#' }}" tabindex="-1">Previous</a>
+      </li>
+      <li class="page-item {% if not next_url %}disabled{% endif %}">
+        <a class="page-link" href="{{ next_url or '#' }}">Next</a>
+      </li>
+    </ul>
+  </nav>
+
+{% endblock %}
