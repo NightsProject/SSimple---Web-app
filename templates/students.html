@@ -1,13 +1,29 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container mt-4">
 
-  <!-- Search bar -->
+
+    <!-- Search and Sort Controls -->
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3>Students</h3>
-    <form class="d-flex" role="search" method="get" action="">
-      <input class="form-control me-2" type="search" placeholder="Search students..." name="q">
+    <!-- Search -->
+    <form class="d-flex" role="search" method="get">
+      <input class="form-control me-2" 
+             type="search" 
+             placeholder="Search Students..." 
+             name="q" 
+             value="{{ request.args.get('q', '') }}">
       <button class="btn btn-outline-primary" type="submit">Search</button>
+    </form>
+
+    <!-- Sort -->
+    <form method="get">
+      <select class="form-select" name="sort" onchange="this.form.submit()">
+        <option value="id" {% if request.args.get('sort') == 'id' %}selected{% endif %}>Sort by ID Number</option>
+        <option value="first_name" {% if request.args.get('sort') == 'first_name' %}selected{% endif %}>Sort by First Name</option>
+        <option value="last_name" {% if request.args.get('sort') == 'last_name' %}selected{% endif %}>Sort by Last Name</option>
+        <option value="course" {% if request.args.get('sort') == 'course' %}selected{% endif %}>Sort by Course</option>
+        <option value="year" {% if request.args.get('sort') == 'year' %}selected{% endif %}>Sort by Year</option>
+        <option value="gender" {% if request.args.get('sort') == 'gender' %}selected{% endif %}>Sort by Gender</option>
+      </select>
     </form>
   </div>
 
@@ -84,7 +100,7 @@
     </ul>
   </nav>
 
-</div>
+
 
 <!-- Bootstrap Icons (needed for arrows) -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
