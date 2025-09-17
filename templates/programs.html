@@ -3,15 +3,22 @@
 
   <!-- Search and Sort Controls -->
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <!-- Search -->
-    <form class="d-flex" role="search" method="get">
-      <input class="form-control me-2" 
-             type="search" 
-             placeholder="Search Programs..." 
-             name="q" 
-             value="{{ request.args.get('q', '') }}">
-      <button class="btn btn-outline-primary" type="submit">Search</button>
-    </form>
+  
+    <!-- Left side: New Program button + Search -->
+      <div class="d-flex align-items-center">
+        <!-- New Program Button -->
+        <a href="{{ url_for('programs') }}" class="btn btn-success me-3">Add Program</a>
+
+        <!-- Search -->
+        <form class="d-flex" role="search" method="get">
+          <input class="form-control me-2" 
+                type="search" 
+                placeholder="Search Programs..." 
+                name="q" 
+                value="{{ request.args.get('q', '') }}">
+          <button class="btn btn-outline-primary" type="submit">Search</button>
+        </form>
+      </div>
 
     <!-- Sort -->
     <form method="get">
