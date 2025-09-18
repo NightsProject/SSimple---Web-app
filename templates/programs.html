@@ -39,6 +39,7 @@
           <th scope="col">Code</th>
           <th scope="col">Name</th>
           <th scope="col">College</th>
+          <th scope="col">Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -48,6 +49,14 @@
           <td>{{ program.code }}</td>
           <td>{{ program.name }}</td>
           <td>{{ program.college.name }}</td>
+          <td>
+            <a href="{{ url_for('programs', id=program.code) }}" class="btn btn-sm btn-warning">Edit</a>
+            <a href="{{ url_for('programs', id=program.code) }}" 
+              class="btn btn-sm btn-danger"
+              onclick="return confirm('Are you sure you want to delete this program?');">
+              Delete
+            </a>
+          </td>
         </tr>
         {% endfor %}
       </tbody>
