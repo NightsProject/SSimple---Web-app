@@ -34,8 +34,10 @@
     <table class="table table-striped table-hover">
       <thead>
         <tr>
+          <th scope="col">#</th>
           <th scope="col">Code</th>
           <th scope="col">Name</th>
+          <th scope="col">Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -44,11 +46,20 @@
           <th scope="row">{{ loop.index }}</th>
           <td>{{ college.code }}</td>
           <td>{{ college.name }}</td>
+          <td>
+            <a href="{{ url_for('colleges', id=college.id) }}" class="btn btn-sm btn-warning">Edit</a>
+            <a href="{{ url_for('colleges', id=college.id) }}" 
+              class="btn btn-sm btn-danger"
+              onclick="return confirm('Are you sure you want to delete this college?');">
+              Delete
+            </a>
+          </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
+
 
   <!-- Pagination -->
   <nav aria-label="College pagination">
