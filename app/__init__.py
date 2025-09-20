@@ -3,14 +3,22 @@ from config import DB_USERNAME, DB_PASSWORD, DB_NAME, DB_HOST, DB_PORT, SECRET_K
 from flask_wtf.csrf import CSRFProtect
 from psycopg2 import pool
 from dotenv import load_dotenv
+from flask_bootstrap import Bootstrap
+
+
+db_pool = None
 
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
     
     load_dotenv('.env')
+  
+    app.config['SECRET_KEY'] = SECRET_KEY 
     
     CSRFProtect(app)
-
+    Bootstrap(app)
+    
+    
     #Initialize connection pool ONCE
     global db_pool
     if db_pool is None:
@@ -39,6 +47,13 @@ def create_app(test_config=None):
             
     from .user import user_bp as user_blueprint
     app.register_blueprint(user_blueprint)
-
+    from .dashboard import dashboard_bp as dashboard_blueprint
+    app.register_blueprint(dashboard_blueprint)
+    from .colleges import colleges_bp as colleges_blueprint
+    app.register_blueprint(colleges_blueprint)
+    from .programs import programs_bp as programs_blueprint
+    app.register_blueprint(programs_blueprint)
+    from .students import students_bp as students_blueprint
+    app.register_blueprint(students_blueprint)
 
     return app

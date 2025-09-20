@@ -1,0 +1,90 @@
+{% extends "layouts/master_layout.html" %}
+
+{% block title %}Users List{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item active" aria-current="page">Users</li>
+            </ol>
+        </nav>
+        <div class="row">
+            <div class="col text-center">
+                <span class="float-right"><a href="{{ url_for('.register') }}" class="btn btn-primary">New</a></span>
+            </div>
+            <div class="col text-center">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('.login') }}">Login</a>
+                </li>
+            </div>
+        </div>
+        <div class="row mt-2">
+            <table class="table table-hover table-bordered">
+                <thead class="thead-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for user in data %}
+                    <tr>
+                        <td>{{user[0]}}</td>
+                        <td>{{user[1]}}</td>
+                        <td>{{user[2]}}</td>
+                        <td>
+                            <button class="btn btn-warning btn-sm">Edit</button> 
+                            <button class="btn btn-danger btn-sm btn-delete" data-id="{{ user[0]}}">Delete</button>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}
+{% block scripts%}
+{{super()}}
+<script>
+    // Note: The original controller used a POST to /user/delete with a form ID.
+    // This JS snippet sends an AJAX request to match that behavior.
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Function to handle the AJAX deletion
+        const handleDelete = (id) => {
+            if (!confirm(`Are you sure you want to delete user ID ${id}?`)) {
+                return;
+            }
+
+            $.ajax({
+                url: "{{ url_for('.delete') }}",
+                method: 'POST',
+                data: { id: id },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        alert(response.message);
+                        window.location.reload(); // Reload page to see update
+                    } else {
+                        alert(`Deletion failed: ${response.message}`);
+                    }
+                },
+                error: function() {
+                    alert('An error occurred during deletion.');
+                }
+            });
+        };
+
+        // Attach event listener to all delete buttons
+        document.querySelectorAll('.btn-delete').forEach(button => {
+            button.addEventListener('click', function() {
+                const userId = this.getAttribute('data-id');
+                handleDelete(userId);
+            });
+        });
+    });
+</script>
+{% endblock %}
