@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "layouts/base.html" %}
 {% block content %}
 
 
@@ -8,7 +8,7 @@
       <!-- Left side: New Student button + Search -->
       <div class="d-flex align-items-center">
         <!-- New Student Button -->
-        <a href="{{ url_for('students') }}" class="btn btn-success me-3">Add Student</a>
+        <a href="{{ url_for('students.students') }}" class="btn btn-success me-3">Add Student</a>
 
         <!-- Search -->
         <form class="d-flex" role="search" method="get">

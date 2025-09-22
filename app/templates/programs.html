@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "layouts/base.html" %}
 {% block content %}
 
   <!-- Search and Sort Controls -->
@@ -7,7 +7,7 @@
     <!-- Left side: New Program button + Search -->
       <div class="d-flex align-items-center">
         <!-- New Program Button -->
-        <a href="{{ url_for('programs') }}" class="btn btn-success me-3">Add Program</a>
+        <a href="{{ url_for('programs.programs') }}" class="btn btn-success me-3">Add Program</a>
 
         <!-- Search -->
         <form class="d-flex" role="search" method="get">
