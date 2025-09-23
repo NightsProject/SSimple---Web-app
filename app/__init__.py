@@ -2,22 +2,19 @@ from flask import Flask, g
 from config import DB_USERNAME, DB_PASSWORD, DB_NAME, DB_HOST, DB_PORT, SECRET_KEY, BOOTSTRAP_SERVE_LOCAL
 from flask_wtf.csrf import CSRFProtect
 from psycopg2 import pool
-from dotenv import load_dotenv
 from flask_bootstrap import Bootstrap
-
-
+import app.db_init as create_database
 db_pool = None
 
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
     
-    load_dotenv('.env')
-  
     app.config['SECRET_KEY'] = SECRET_KEY 
     
     CSRFProtect(app)
     Bootstrap(app)
     
+    create_database.initialize_db()
     
     #Initialize connection pool ONCE
     global db_pool
