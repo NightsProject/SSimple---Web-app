@@ -1,3 +1,148 @@
 {% extends "layouts/base.html" %}
+
 {% block content %}
-{% endblock %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<body>
+    <div class="container mt-4">
+
+    <!-- Summary Cards -->
+    <div class="row text-center">
+        <div class="col-md-3 mb-3">
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+            <h6 class="text-muted">Total Students</h6>
+            <h2 class="fw-bold">{{ total_students }}</h2>
+            </div>
+        </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+            <h6 class="text-muted">Programs Offered</h6>
+            <h2 class="fw-bold">{{ total_programs }}</h2>
+            </div>
+        </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+            <h6 class="text-muted">Colleges</h6>
+            <h2 class="fw-bold">{{ total_colleges }}</h2>
+            </div>
+        </div>
+        </div>
+
+        <div class="col-md-3 mb-3">
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+            <h6 class="text-muted">New Registrations (This Month)</h6>
+            <h2 class="fw-bold">{{ new_registrations }}</h2>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="row mt-4">
+        <div class="col-md-6 mb-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+            <h6 class="mb-3">Students per Program</h6>
+            <canvas id="studentsProgramChart"></canvas>
+            </div>
+        </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+            <h6 class="mb-3">Monthly Registration Trend</h6>
+            <canvas id="monthlyTrendChart"></canvas>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <!-- Recent Registrations Table -->
+    <div class="row mt-3">
+        <div class="col-md-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+            <h6 class="mb-3">Recent Student Registrations</h6>
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                <tr>
+                    <th>Name</th>
+                    <th>Program</th>
+                    <th>College</th>
+                    <th>Registration Date</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for student in recent_students %}
+                <tr>
+                    <td>{{ student.name }}</td>
+                    <td>{{ student.program }}</td>
+                    <td>{{ student.college }}</td>
+                    <td>{{ student.date_registered.strftime("%Y-%m-%d") }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="text-center text-muted">No recent registrations found.</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Chart.js (you can include from CDN in base.html) -->
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+    // Students per Program Chart
+    new Chart(document.getElementById('studentsProgramChart'), {
+        type: 'bar',
+        data: {
+        labels: {{ program_names|tojson }},
+        datasets: [{
+            label: 'Students',
+            data: {{ program_counts|tojson }},
+            borderWidth: 1
+        }]
+        },
+        options: {
+        scales: {
+            y: { beginAtZero: true }
+        }
+        }
+    });
+
+    // Monthly Registration Trend
+    new Chart(document.getElementById('monthlyTrendChart'), {
+        type: 'line',
+        data: {
+        labels: {{ months|tojson }},
+        datasets: [{
+            label: 'Registrations',
+            data: {{ monthly_counts|tojson }},
+            fill: false,
+            borderWidth: 2,
+            tension: 0.3
+        }]
+        },
+        options: {
+        scales: {
+            y: { beginAtZero: true }
+        }
+        }
+    });
+    });
+    </script>
+    {% endblock %}
+    
+</body>

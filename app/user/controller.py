@@ -1,6 +1,6 @@
 from flask import render_template, redirect, request, jsonify, url_for, flash, session
 from . import user_bp
-import app.models as models
+from .models import Users
 from app.user.forms import RegistrationForm, LoginForm
 
 
@@ -9,7 +9,7 @@ def login():
     """Handles user login (maps to login.html) and checks credentials against the database."""
     form = LoginForm(request.form)
     if request.method == 'POST' and form.validate():
-        user = models.Users.authenticate(
+        user = Users.authenticate(
             username=form.username.data, 
             password=form.password.data
         )
@@ -29,7 +29,7 @@ def register():
     """Handles user registration (maps to signup.html)."""
     form = RegistrationForm(request.form)
     if request.method == 'POST' and form.validate():
-        user = models.Users(email=form.email.data, password=form.password.data,username=form.username.data)
+        user = Users(email=form.email.data, password=form.password.data,username=form.username.data)
         user.add()
         flash(f'User {form.username.data} registered successfully. Please log in.', 'success')
         return redirect(url_for('.login')) # Redirect to login after registration
@@ -40,7 +40,7 @@ def register():
 def delete():
     """Handles user deletion via AJAX POST request."""
     id = request.form['id']
-    if models.Users.delete(id):
+    if Users.delete(id):
         return jsonify(success=True,message="Successfully deleted")
     else:
         return jsonify(success=False,message="Failed")
