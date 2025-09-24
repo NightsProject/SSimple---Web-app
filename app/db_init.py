@@ -68,14 +68,6 @@ def ready_college_table():
     """
     execute_query(query)
 
-    insert_query = """
-    INSERT INTO colleges (college_code, college_name)
-    VALUES (%s, %s)
-    ON CONFLICT (college_code) DO NOTHING
-    """
-    execute_query(insert_query, ('none', 'No College'))
-
-
 def ready_program_table():
     query = """
     CREATE TABLE IF NOT EXISTS programs (
@@ -91,14 +83,6 @@ def ready_program_table():
     """
     execute_query(query)
  
-    insert_query = """
-    INSERT INTO programs (program_code, program_name, college_code)
-    VALUES (%s, %s, %s)
-    ON CONFLICT (program_code) DO NOTHING
-    """
-    execute_query(insert_query, ('none', 'No Program', 'none'))
-
-
 def ready_student_table():
     query = """
     CREATE TABLE IF NOT EXISTS students (
@@ -189,12 +173,6 @@ def ready_user_info_table():
     );
     """
     execute_query(query)
-
-    # Set sequence start value to 5
-    sequence_query = """
-    ALTER SEQUENCE user_info_id_seq RESTART WITH 5;
-    """
-    execute_query(sequence_query)
 
 
 def initialize_db():
