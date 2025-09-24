@@ -52,11 +52,16 @@
           <td>{{ college.name }}</td>
           <td>
             <a href="{{ url_for('colleges.update', code=college.code) }}" class="btn btn-sm btn-warning">Edit</a>
-            <a href="{{ url_for('colleges.delete', code=college.code) }}" 
-              class="btn btn-sm btn-danger"
-              onclick="return confirm('Are you sure you want to delete this college?');">
-              Delete
-            </a>
+
+            <form action="{{ url_for('colleges.delete') }}" method="POST" style="display:inline;">
+              <input type="hidden" name="code" value="{{ college.code }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-sm btn-danger" 
+                      onclick="return confirm('Are you sure you want to delete this college?');">
+                  Delete
+              </button>
+           </form>
+
           </td>
         </tr>
         {% else %}
@@ -90,23 +95,23 @@
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
 
-      <form action="{{ url_for('colleges.add_college') }}" method="post">
-        {{ form.hidden_tag() }} 
+      <form action="{{ url_for('colleges.add') }}" method="post">
+        {{ college_form.hidden_tag() }} 
 
         <div class="modal-body">
           <div class="mb-3">
-            {{ form.code.label(class="form-label") }}
-            {{ form.code(class="form-control", id="collegeCode", placeholder="e.g., CC") }}
+            {{ college_form.code.label(class="form-label") }}
+            {{ college_form.code(class="form-control", id="collegeCode", placeholder="e.g., CC") }}
           </div>
           <div class="mb-3">
-            {{ form.name.label(class="form-label") }}
-            {{ form.name(class="form-control", id="collegeName", placeholder="e.g., College of Computing") }}
+            {{ college_form.name.label(class="form-label") }}
+            {{ college_form.name(class="form-control", id="collegeName", placeholder="e.g., College of Computing") }}
           </div>
         </div>
 
         <div class="modal-footer">
           <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-          {{ form.submit(class="btn btn-success") }}
+          {{ college_form.submit(class="btn btn-success") }}
         </div>
       </form>
     </div>
