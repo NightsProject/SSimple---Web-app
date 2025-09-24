@@ -26,6 +26,7 @@
         }
       }
     </style>
+    
   </head>
   <body>
     <!-- Sidebar toggle for mobile -->
@@ -103,7 +104,22 @@
 
         <!-- Main content -->
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
-          {% block content %}{% endblock %}
+          {% block content %}
+          
+          <!-- 🔔 Flash Messages -->
+          {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+              {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                  {{ message }}
+                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+              {% endfor %}
+            {% endif %}
+          {% endwith %}
+
+
+          {% endblock %}
         </main>
       </div>
     </div>
