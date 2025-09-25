@@ -118,5 +118,52 @@
   </div>
 </div>
 
+  {# Edit modal: shown when server sets show_edit_modal and provides edit_form #}
+    {% if edit_form is defined %}
+    <div class="modal fade" id="editCollegeModal" tabindex="-1" aria-labelledby="editCollegeModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content border-0 shadow-lg">
+          <div class="modal-header bg-warning text-dark">
+            <h5 class="modal-title" id="editCollegeModalLabel">Edit College</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
 
-{% endblock %}
+          <form action="{{ url_for('colleges.update') }}" method="post">
+            {{ edit_form.hidden_tag() }}
+            <input type="hidden" name="original_code" value="{{ edit_code }}">
+
+            <div class="modal-body">
+              <div class="mb-3">
+                {{ edit_form.code.label(class="form-label") }}
+                {{ edit_form.code(class="form-control", id="editCollegeCode", placeholder="e.g., CC") }}
+              </div>
+              <div class="mb-3">
+                {{ edit_form.name.label(class="form-label") }}
+                {{ edit_form.name(class="form-control", id="editCollegeName", placeholder="e.g., College of Computing") }}
+              </div>
+            </div>
+
+            <div class="modal-footer">
+              <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" class="btn btn-warning">Save changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    {% if show_edit_modal %}
+      <script>
+        // When the page loads, open the edit modal (server-side flagged)
+        document.addEventListener('DOMContentLoaded', function() {
+          var editModalEl = document.getElementById('editCollegeModal');
+          if (editModalEl) {
+            var modal = new bootstrap.Modal(editModalEl);
+            modal.show();
+          }
+        });
+      </script>
+    {% endif %}
+
+    {% endblock %}
+

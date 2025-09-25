@@ -38,10 +38,47 @@ class Colleges:
                 return result
         finally:
             db_pool.putconn(conn)
+
+    @staticmethod
+    def get_by_code(college_code):
+        """Return a single college as a dict or None if not found."""
+        conn = db_pool.getconn()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT college_code, college_name FROM colleges WHERE college_code = %s",
+                    (college_code,)
+                )
+                row = cursor.fetchone()
+                if not row:
+                    return None
+                return {"code": row[0], "name": row[1]}
+        finally:
+            db_pool.putconn(conn)
     
     #update
     def update():
         pass
+
+    @staticmethod
+    def update_college(original_code, new_code, new_name):
+        """Update a college's code and/or name. Returns number of affected rows."""
+        conn = db_pool.getconn()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    UPDATE colleges
+                    SET college_code = %s, college_name = %s
+                    WHERE college_code = %s
+                    """,
+                    (new_code, new_name, original_code)
+                )
+                updated = cursor.rowcount
+                conn.commit()
+                return updated
+        finally:
+            db_pool.putconn(conn)
     
     #delete
     @staticmethod
