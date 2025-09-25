@@ -56,7 +56,24 @@ class Colleges:
                     """,
                     (college_code,)
                 )
+                deleted = cursor.rowcount
                 conn.commit()
+                return deleted
+        finally:
+            db_pool.putconn(conn)
+
+    @staticmethod
+    def has_programs(college_code):
+        """Return True if any programs reference this college_code."""
+        conn = db_pool.getconn()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT COUNT(1) FROM programs WHERE college_code = %s",
+                    (college_code,)
+                )
+                row = cursor.fetchone()
+                return bool(row and row[0])
         finally:
             db_pool.putconn(conn)
     

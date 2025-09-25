@@ -46,10 +46,17 @@ def delete():
         flash("No college code provided.", "warning")
         print("No college code provided.")
         return redirect(url_for("colleges.list"))
-
+    # Prevent deletion if there are programs assigned to this college
     try:
-        Colleges.delete(code)
-        flash("College deleted successfully.", "success")
+        if Colleges.has_programs(code):
+            flash("Cannot delete college because there are programs assigned to it. Reassign or remove those programs first.", "warning")
+            return redirect(url_for("colleges.list"))
+
+        deleted = Colleges.delete(code)
+        if deleted:
+            flash("College deleted successfully.", "success")
+        else:
+            flash("College not found or already deleted.", "warning")
     except Exception as e:
         flash(f"Error deleting college: {e}", "danger")
     return redirect(url_for("colleges.list"))
