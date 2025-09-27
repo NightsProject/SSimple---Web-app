@@ -90,7 +90,7 @@ def ready_student_table():
         first_name VARCHAR(50) NOT NULL,
         last_name VARCHAR(50) NOT NULL,
         year_level VARCHAR(20),
-        gender VARCHAR(10) CHECK (gender IN ('Male', 'Female')),
+        gender VARCHAR(10) CHECK (gender IN ('Male', 'Female', 'Other')),
         program_code VARCHAR(20),
         CONSTRAINT fk_program
             FOREIGN KEY (program_code)
