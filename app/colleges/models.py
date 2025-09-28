@@ -144,6 +144,18 @@ class Colleges:
             db_pool.putconn(conn)
 
     @staticmethod
+    def get_all_list():
+        """Return all colleges as list of dicts."""
+        conn = db_pool.getconn()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT college_code, college_name FROM colleges ORDER BY college_code")
+                rows = cursor.fetchall()
+                return [{"code": r[0], "name": r[1]} for r in rows]
+        finally:
+            db_pool.putconn(conn)
+
+    @staticmethod
     def has_programs(college_code):
         """Return True if any programs reference this college_code."""
         conn = db_pool.getconn()

@@ -24,29 +24,81 @@ class Programs:
             db_pool.putconn(conn)
 
     @staticmethod
-    def get_all():
-        """Return all programs with optional college name joined."""
+    def get_all(search=None, sort_by=None, page=1, per_page=10):
+        """Return paginated programs with college name joined."""
         conn = db_pool.getconn()
         try:
             with conn.cursor() as cursor:
-                cursor.execute(
+                # First, get total count for pagination
+                count_query = """
+                    SELECT COUNT(*)
+                    FROM programs p
+                    LEFT JOIN colleges c ON p.college_code = c.college_code
+                """
+                count_params = []
+
+                if search:
+                    count_query += """
+                    WHERE LOWER(p.program_code) LIKE LOWER(%s)
+                    OR LOWER(p.program_name) LIKE LOWER(%s)
                     """
+                    search_term = f"%{search}%"
+                    count_params.extend([search_term, search_term])
+
+                cursor.execute(count_query, count_params)
+                total = cursor.fetchone()[0]
+
+                # Now get paginated results
+                query = """
                     SELECT p.program_code, p.program_name, p.college_code, c.college_name
                     FROM programs p
                     LEFT JOIN colleges c ON p.college_code = c.college_code
-                    ORDER BY p.program_code
+                """
+                params = []
+
+                if search:
+                    query += """
+                    WHERE LOWER(p.program_code) LIKE LOWER(%s)
+                    OR LOWER(p.program_name) LIKE LOWER(%s)
                     """
-                )
+                    params.extend([search_term, search_term])
+
+                # Add sorting
+                if sort_by:
+                    sort_mapping = {
+                        'code': 'p.program_code',
+                        'name': 'p.program_name'
+                    }
+                    sort_column = sort_mapping.get(sort_by, 'p.program_code')
+                    query += f" ORDER BY {sort_column}"
+                else:
+                    query += " ORDER BY p.program_code"
+
+                # Add pagination
+                offset = (page - 1) * per_page
+                query += " LIMIT %s OFFSET %s"
+                params.extend([per_page, offset])
+
+                cursor.execute(query, params)
                 rows = cursor.fetchall()
-                result = []
+                items = []
                 for r in rows:
-                    result.append({
+                    items.append({
                         "code": r[0],
                         "name": r[1],
                         "college_code": r[2],
                         "college_name": r[3],
                     })
-                return result
+
+                total_pages = (total + per_page - 1) // per_page  # Ceiling division
+
+                return {
+                    'items': items,
+                    'total': total,
+                    'pages': total_pages,
+                    'page': page,
+                    'per_page': per_page
+                }
         finally:
             db_pool.putconn(conn)
 
@@ -94,6 +146,33 @@ class Programs:
                 deleted = cursor.rowcount
                 conn.commit()
                 return deleted
+        finally:
+            db_pool.putconn(conn)
+
+    @staticmethod
+    def get_all_list():
+        """Return all programs as list of dicts."""
+        conn = db_pool.getconn()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT p.program_code, p.program_name, p.college_code, c.college_name
+                    FROM programs p
+                    LEFT JOIN colleges c ON p.college_code = c.college_code
+                    ORDER BY p.program_code
+                    """
+                )
+                rows = cursor.fetchall()
+                result = []
+                for r in rows:
+                    result.append({
+                        "code": r[0],
+                        "name": r[1],
+                        "college_code": r[2],
+                        "college_name": r[3],
+                    })
+                return result
         finally:
             db_pool.putconn(conn)
 

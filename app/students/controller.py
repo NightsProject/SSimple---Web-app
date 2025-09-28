@@ -22,7 +22,7 @@ def students_list():
 
     # prepare add/edit form and program choices so modal options are available on page load
     form = StudentForm()
-    programs = Programs.get_all()
+    programs = Programs.get_all_list()
     form.program_code.choices = [(p['code'], f"{p['code']} - {p['name']}") for p in programs]
 
     # default id_year to current year and prefill next id for that year
@@ -65,9 +65,9 @@ def add_student():
         return redirect(url_for('user.login'))
 
     form = StudentForm()
-    
+
     # Populate program choices
-    programs = Programs.get_all()
+    programs = Programs.get_all_list()
     form.program_code.choices = [(p['code'], f"{p['code']} - {p['name']}") for p in programs]
     
     # Prefill next available ID for GET requests (fills gaps)
@@ -131,7 +131,7 @@ def update():
 
     # Prepare form and program choices for either GET or POST
     form = StudentForm(prefix='edit')
-    programs = Programs.get_all()
+    programs = Programs.get_all_list()
     form.program_code.choices = [(p['code'], f"{p['code']} - {p['name']}") for p in programs]
 
     # GET: show the edit modal pre-filled
@@ -219,6 +219,7 @@ def update():
                 students_list = students_list_data['items']
                 # prepare add form so page has program choices
                 add_form = StudentForm()
+                programs = Programs.get_all_list()
                 add_form.program_code.choices = [(p['code'], f"{p['code']} - {p['name']}") for p in programs]
                 return render_template('students.html', form=add_form, edit_form=form, students=students_list, show_edit_modal=True, edit_id=original_id, username=session.get('username'), active_page="students", pagination=students_list_data, prev_url=None, next_url=None)
         else:
@@ -228,6 +229,7 @@ def update():
             students_list = students_list_data['items']
             # prepare add form so page has program choices
             add_form = StudentForm()
+            programs = Programs.get_all_list()
             add_form.program_code.choices = [(p['code'], f"{p['code']} - {p['name']}") for p in programs]
             return render_template('students.html', form=add_form, edit_form=form, students=students_list, show_edit_modal=True, edit_id=request.form.get('original_id'), username=session.get('username'), active_page="students", pagination=students_list_data, prev_url=None, next_url=None)
 
