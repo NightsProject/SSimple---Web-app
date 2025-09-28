@@ -83,8 +83,9 @@ def update():
         form.name.data = college['name']
 
         # render the same list page but indicate we should open the edit modal
-        colleges_list = Colleges.get_all()
-        return render_template('colleges.html', college_form=CollegeForm(), edit_form=form, colleges=colleges_list, show_edit_modal=True, edit_code=code)
+        colleges_data = Colleges.get_all()
+        colleges = colleges_data['items']
+        return render_template('colleges.html', college_form=CollegeForm(), edit_form=form, colleges=colleges, pagination=colleges_data, prev_url=None, next_url=None, show_edit_modal=True, edit_code=code)
 
     # POST: perform update
     if request.method == 'POST':
@@ -101,12 +102,14 @@ def update():
                 return redirect(url_for('colleges.list'))
             except Exception as e:
                 flash(f"Error updating college: {e}", "danger")
-                colleges_list = Colleges.get_all()
-                return render_template('colleges.html', college_form=CollegeForm(), edit_form=form, colleges=colleges_list, show_edit_modal=True, edit_code=original_code)
+                colleges_data = Colleges.get_all()
+                colleges = colleges_data['items']
+                return render_template('colleges.html', college_form=CollegeForm(), edit_form=form, colleges=colleges, pagination=colleges_data, prev_url=None, next_url=None, show_edit_modal=True, edit_code=original_code)
         else:
             flash("Please correct the errors in the form.", "danger")
-            colleges_list = Colleges.get_all()
-            return render_template('colleges.html', college_form=CollegeForm(), edit_form=form, colleges=colleges_list, show_edit_modal=True, edit_code=request.form.get('original_code'))
+            colleges_data = Colleges.get_all()
+            colleges = colleges_data['items']
+            return render_template('colleges.html', college_form=CollegeForm(), edit_form=form, colleges=colleges, pagination=colleges_data, prev_url=None, next_url=None, show_edit_modal=True, edit_code=request.form.get('original_code'))
 
 @colleges_bp.route("/colleges/delete", methods=["POST"])
 def delete():
