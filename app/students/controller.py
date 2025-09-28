@@ -105,7 +105,10 @@ def add_student():
         'students.html',
         form=form,
         username=session.get('username'),
-        active_page="students"
+        active_page="students",
+        pagination=None,
+        prev_url=None,
+        next_url=None
     )
 
 
@@ -212,11 +215,12 @@ def update():
                 return redirect(url_for('students.students_list'))
             except Exception as e:
                 flash(f'Error updating student: {e}', 'danger')
-                students_list = Students.get_all()
+                students_list_data = Students.get_all()
+                students_list = students_list_data['items']
                 # prepare add form so page has program choices
                 add_form = StudentForm()
                 add_form.program_code.choices = [(p['code'], f"{p['code']} - {p['name']}") for p in programs]
-                return render_template('students.html', form=add_form, edit_form=form, students=students_list, show_edit_modal=True, edit_id=original_id, username=session.get('username'), active_page="students")
+                return render_template('students.html', form=add_form, edit_form=form, students=students_list, show_edit_modal=True, edit_id=original_id, username=session.get('username'), active_page="students", pagination=students_list_data, prev_url=None, next_url=None)
         else:
             # validation failed
             flash('Please correct the errors in the form.', 'danger')

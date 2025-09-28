@@ -68,6 +68,20 @@ def ready_college_table():
     """
     execute_query(query)
 
+    insert_query = """
+    INSERT INTO colleges (college_code, college_name) VALUES %s
+    ON CONFLICT (college_code) DO NOTHING
+    """
+    colleges = [('ENG', 'College of Engineering'), ('SCI', 'College of Science'), ('ART', 'College of Arts')]
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        extras.execute_values(cur, insert_query, colleges)
+        conn.commit()
+    finally:
+        cur.close()
+        conn.close()
+
 def ready_program_table():
     query = """
     CREATE TABLE IF NOT EXISTS programs (
@@ -82,6 +96,30 @@ def ready_program_table():
     )
     """
     execute_query(query)
+
+    insert_query = """
+    INSERT INTO programs (program_code, program_name, college_code) VALUES %s
+    ON CONFLICT (program_code) DO NOTHING
+    """
+    programs = [
+        ('BSCE', 'Bachelor of Science in Civil Engineering', 'ENG'),
+        ('BSEE', 'Bachelor of Science in Electrical Engineering', 'ENG'),
+        ('BSME', 'Bachelor of Science in Mechanical Engineering', 'ENG'),
+        ('BSCS', 'Bachelor of Science in Computer Science', 'SCI'),
+        ('BSMATH', 'Bachelor of Science in Mathematics', 'SCI'),
+        ('BSPHY', 'Bachelor of Science in Physics', 'SCI'),
+        ('BAENG', 'Bachelor of Arts in English', 'ART'),
+        ('BAHIST', 'Bachelor of Arts in History', 'ART'),
+        ('BAART', 'Bachelor of Arts in Fine Arts', 'ART')
+    ]
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        extras.execute_values(cur, insert_query, programs)
+        conn.commit()
+    finally:
+        cur.close()
+        conn.close()
  
 def ready_student_table():
     query = """
@@ -100,6 +138,34 @@ def ready_student_table():
     )
     """
     execute_query(query)
+
+    insert_query = """
+    INSERT INTO students (id_number, first_name, last_name, year_level, gender, program_code) VALUES %s
+    ON CONFLICT (id_number) DO NOTHING
+    """
+    first_names = ['John', 'Jane', 'Alice', 'Bob', 'Charlie', 'Diana', 'Eve', 'Frank', 'Grace', 'Henry', 'Ivy', 'Jack', 'Kate', 'Liam', 'Mia', 'Noah', 'Olivia', 'Peter', 'Quinn', 'Ryan', 'Sophia', 'Tyler', 'Uma', 'Victor', 'Wendy', 'Xander', 'Yara', 'Zoe']
+    last_names = ['Doe', 'Smith', 'Johnson', 'Williams', 'Brown', 'Davis', 'Miller', 'Wilson', 'Moore', 'Taylor', 'Anderson', 'Thomas', 'Jackson', 'White', 'Harris', 'Martin', 'Thompson', 'Garcia', 'Martinez', 'Robinson', 'Clark', 'Rodriguez', 'Lewis', 'Lee', 'Walker', 'Hall', 'Allen', 'Young', 'Hernandez', 'King']
+    year_levels = ['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year', '6th Year']
+    programs = ['BSCE', 'BSEE', 'BSME', 'BSCS', 'BSMATH', 'BSPHY', 'BAENG', 'BAHIST', 'BAART']
+    genders = ['Male', 'Female', 'Other']
+
+    students = []
+    for i in range(1, 131): # 130 students
+        id_num = f'2024-{i:04d}'
+        first_name = first_names[(i-1) % len(first_names)]
+        last_name = last_names[(i-1) % len(last_names)]
+        year_level = year_levels[(i-1) % len(year_levels)]
+        gender = genders[(i-1) % len(genders)]
+        program = programs[(i-1) % len(programs)]
+        students.append((id_num, first_name, last_name, year_level, gender, program))
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        extras.execute_values(cur, insert_query, students)
+        conn.commit()
+    finally:
+        cur.close()
+        conn.close()
 
 
 def ready_year_level_table():
@@ -160,6 +226,26 @@ def ready_users_table():
     """
     execute_query(query)
 
+    insert_query = """
+    INSERT INTO users (username, email, user_password) VALUES %s
+    ON CONFLICT (username) DO NOTHING
+    """
+    users = [
+        ('admin', 'admin@example.com', 'password123'),
+        ('johndoe', 'john.doe@example.com', 'pass123'),
+        ('janesmith', 'jane.smith@example.com', 'pass456'),
+        ('alicejohnson', 'alice.johnson@example.com', 'pass789'),
+        ('bobwilliams', 'bob.williams@example.com', 'pass000')
+    ]
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        extras.execute_values(cur, insert_query, users)
+        conn.commit()
+    finally:
+        cur.close()
+        conn.close()
+
 
 def ready_user_info_table():
     """Create user_info table with a starting sequence."""
@@ -173,6 +259,26 @@ def ready_user_info_table():
     );
     """
     execute_query(query)
+
+    insert_query = """
+    INSERT INTO user_info (fullname, address, birthday, user_id) VALUES %s
+    ON CONFLICT DO NOTHING
+    """
+    user_infos = [
+        ('Administrator', '123 Admin St, City, Country', '1990-01-01', 1),
+        ('John Doe', '456 User Ave, City, Country', '1995-05-15', 2),
+        ('Jane Smith', '789 User Blvd, City, Country', '1992-08-20', 3),
+        ('Alice Johnson', '101 User Rd, City, Country', '1988-12-10', 4),
+        ('Bob Williams', '202 User Ln, City, Country', '1993-03-25', 5)
+    ]
+    conn = get_connection()
+    cur = conn.cursor()
+    try:
+        extras.execute_values(cur, insert_query, user_infos)
+        conn.commit()
+    finally:
+        cur.close()
+        conn.close()
 
 
 def initialize_db():
