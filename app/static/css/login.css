@@ -1,0 +1,139 @@
+/* Enhanced styles for login and signup pages */
+
+body {
+    background: linear-gradient(135deg, #1B3C53 0%, #234C6A 50%, #456882 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Lato', sans-serif;
+}
+
+.container {
+    max-width: 400px;
+    width: 100%;
+}
+
+.card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    transition: transform 0.3s ease;
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card-header {
+    padding: 2rem;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.5rem;
+    background: linear-gradient(45deg, #1B3C53, #234C6A);
+    color: #D2C1B6;
+}
+
+.card-body {
+    padding: 2rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-control {
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #234C6A;
+    box-shadow: 0 0 0 0.2rem rgba(35, 76, 106, 0.25);
+}
+
+.btn {
+    border-radius: 10px;
+    padding: 0.75rem 2rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.btn-primary {
+    background: linear-gradient(45deg, #234C6A, #456882);
+    color: #D2C1B6;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(45deg, #1B3C53, #234C6A);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.btn-success {
+    background: linear-gradient(45deg, #456882, #D2C1B6);
+    color: #1B3C53;
+}
+
+.btn-success:hover {
+    background: linear-gradient(45deg, #234C6A, #456882);
+    color: #D2C1B6;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.text-center a {
+    color: #234C6A;
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+.text-center a:hover {
+    color: #456882;
+    text-decoration: underline;
+}
+
+hr {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #456882, transparent);
+    margin: 2rem 0;
+}
+
+.alert {
+    border-radius: 10px;
+    border: none;
+}
+
+.alert-danger {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.alert-success {
+    background: #d4edda;
+    color: #155724;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .card-header {
+        padding: 1.5rem;
+        font-size: 1.25rem;
+    }
+    .card-body {
+        padding: 1.5rem;
+    }
+    .btn {
+        padding: 0.5rem 1.5rem;
+    }
+}

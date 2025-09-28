@@ -12,6 +12,10 @@
     {{super()}}
     <link rel="stylesheet" type="text/css"
           href="{{url_for('static', filename='css/style.css')}}">
+    {%- if request.endpoint in ['user.login', 'user.register'] -%}
+    <link rel="stylesheet" type="text/css"
+          href="{{url_for('static', filename='css/login.css')}}">
+    {%- endif -%}
 
 
 {% endblock %}

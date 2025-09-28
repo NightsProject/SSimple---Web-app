@@ -5,24 +5,55 @@
 
 {% block content %}
 <div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-6 col-lg-5">
-            <div class="card mt-5 shadow">
-                <div class="card-header bg-primary text-white text-center">
-                    <h3 class="mb-0">Sign In</h3>
+    <div class="card">
+        <div class="card-header">
+            <h3>Sign In</h3>
+        </div>
+        <div class="card-body">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            <form method="POST" action="{{ url_for('.login') }}">
+                {{ form.hidden_tag() }}
+                <div class="form-group">
+                    {{ form.username.label }}
+                    {{ form.username(class="form-control") }}
+                    {% if form.username.errors %}
+                        <div class="text-danger">
+                            {% for error in form.username.errors %}
+                                <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
-                <div class="card-body">
-                    {# Uses Flask-WTF macro to render the form quickly #}
-                    <form method="POST" action="{{ url_for('.login') }}">
-                        {{ wtf.quick_form(form, button_map={'login': 'primary'}, form_type='basic') }}
-                    </form>
-
-                    <hr>
-                    <div class="text-center">
-                        <p class="text-muted mb-1">Don't have an account?</p>
-                        <a href="{{ url_for('.register') }}">Register Here</a> 
-                    </div>
+                <div class="form-group">
+                    {{ form.password.label }}
+                    {{ form.password(class="form-control") }}
+                    {% if form.password.errors %}
+                        <div class="text-danger">
+                            {% for error in form.password.errors %}
+                                <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
+                <div class="form-check mb-3">
+                    {{ form.remember_me(class="form-check-input") }}
+                    {{ form.remember_me.label(class="form-check-label") }}
+                </div>
+                {{ form.submit(class="btn btn-primary w-100") }}
+            </form>
+            <hr>
+            <div class="text-center">
+                <p class="mb-1">Don't have an account?</p>
+                <a href="{{ url_for('.register') }}">Register Here</a>
             </div>
         </div>
     </div>
