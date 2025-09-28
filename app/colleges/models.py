@@ -26,16 +26,60 @@ class Colleges:
         
     #read
     @staticmethod
-    def get_all():
-        """Read all colleges from the database and return as list of dicts"""
+    def get_all(search=None, sort_by=None, page=1, per_page=10):
+        """Return paginated colleges with search and sort."""
         conn = db_pool.getconn()
         try:
             with conn.cursor() as cursor:
-                cursor.execute("SELECT college_code, college_name FROM colleges ORDER BY college_code")
+                # First, get total count for pagination
+                count_query = "SELECT COUNT(*) FROM colleges"
+                count_params = []
+
+                if search:
+                    count_query += " WHERE LOWER(college_code) LIKE LOWER(%s) OR LOWER(college_name) LIKE LOWER(%s)"
+                    search_term = f"%{search}%"
+                    count_params.extend([search_term, search_term])
+
+                cursor.execute(count_query, count_params)
+                total = cursor.fetchone()[0]
+
+                # Now get paginated results
+                query = "SELECT college_code, college_name FROM colleges"
+                params = []
+
+                if search:
+                    query += " WHERE LOWER(college_code) LIKE LOWER(%s) OR LOWER(college_name) LIKE LOWER(%s)"
+                    params.extend([search_term, search_term])
+
+                # Add sorting
+                if sort_by:
+                    sort_mapping = {
+                        'code': 'college_code',
+                        'name': 'college_name'
+                    }
+                    sort_column = sort_mapping.get(sort_by, 'college_code')
+                    query += f" ORDER BY {sort_column}"
+                else:
+                    query += " ORDER BY college_code"
+
+                # Add pagination
+                offset = (page - 1) * per_page
+                query += " LIMIT %s OFFSET %s"
+                params.extend([per_page, offset])
+
+                cursor.execute(query, params)
                 rows = cursor.fetchall()
-                # Convert to list of dictionaries
-                result = [{"code": r[0], "name": r[1]} for r in rows]
-                return result
+                items = [{"code": r[0], "name": r[1]} for r in rows]
+
+                total_pages = (total + per_page - 1) // per_page  # Ceiling division
+
+                return {
+                    'items': items,
+                    'total': total,
+                    'pages': total_pages,
+                    'page': page,
+                    'per_page': per_page
+                }
         finally:
             db_pool.putconn(conn)
 

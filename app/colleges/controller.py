@@ -8,11 +8,37 @@ from .forms import CollegeForm
 def list():
     if 'user_id' not in session:
         return redirect(url_for('user.login'))
-    
+
+    # Get search, sort, and pagination parameters
+    search = request.args.get('q', '')
+    sort_by = request.args.get('sort', 'code')
+    page = int(request.args.get('page', 1))
+    per_page = int(request.args.get('per_page', 10))
+
+    # Get paginated colleges list with search and sort applied
+    colleges_data = Colleges.get_all(search=search, sort_by=sort_by, page=page, per_page=per_page)
+    colleges = colleges_data['items']
+
     college_form = CollegeForm()
-    colleges_list = Colleges.get_all()
-    
-    return render_template('colleges.html', college_form=college_form, colleges=colleges_list, username=session.get('username'))
+
+    # Generate pagination URLs
+    def url_for_page(page_num):
+        args = request.args.copy()
+        args['page'] = page_num
+        return url_for('colleges.list', **args)
+
+    prev_url = url_for_page(page - 1) if page > 1 else None
+    next_url = url_for_page(page + 1) if page < colleges_data['pages'] else None
+
+    return render_template(
+        'colleges.html', 
+        college_form=college_form, 
+        colleges=colleges, 
+        username=session.get('username'), 
+        pagination=colleges_data, 
+        prev_url=prev_url, 
+        next_url=next_url
+    )
 
 
 @colleges_bp.route("/colleges/add", methods=["POST"])
