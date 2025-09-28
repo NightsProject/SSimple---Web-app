@@ -1,92 +1,366 @@
 {% extends "layouts/base.html" %}
 {% block content %}
 
-
-    <!-- Search and Sort Controls -->
-  <div class="d-flex justify-content-between align-items-center mb-3">
+<div class="container mt-4">
+  
+<!-- Search and Sort Controls -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    
+    <div class="d-flex align-items-center">
+      <!-- Add Button-->
+      <button type="button" class="btn btn-success me-3" data-bs-toggle="modal" data-bs-target="#addStudentModal">
+          <i class="bi bi-plus-circle"></i> Add Student
+      </button>
       
-      <!-- Left side: New Student button + Search -->
-      <div class="d-flex align-items-center">
-        <!-- New Student Button -->
-        <a href="{{ url_for('students.students') }}" class="btn btn-success me-3">Add Student</a>
-
-        <!-- Search -->
-        <form class="d-flex" role="search" method="get">
+      <!-- Search -->
+      <form class="d-flex" role="search" method="get">
           <input class="form-control me-2" 
                 type="search" 
-                placeholder="Search Students..." 
+                placeholder="Search students..." 
                 name="q" 
                 value="{{ request.args.get('q', '') }}">
           <button class="btn btn-outline-primary" type="submit">Search</button>
-        </form>
-      </div>
-
+      </form>
+    </div>
     <!-- Sort -->
-    <form method="get">
-      <select class="form-select" name="sort" onchange="this.form.submit()">
-        <option value="id" {% if request.args.get('sort') == 'id' %}selected{% endif %}>Sort by ID Number</option>
-        <option value="first_name" {% if request.args.get('sort') == 'first_name' %}selected{% endif %}>Sort by First Name</option>
-        <option value="last_name" {% if request.args.get('sort') == 'last_name' %}selected{% endif %}>Sort by Last Name</option>
-        <option value="course" {% if request.args.get('sort') == 'course' %}selected{% endif %}>Sort by Course</option>
-        <option value="year" {% if request.args.get('sort') == 'year' %}selected{% endif %}>Sort by Year</option>
-        <option value="gender" {% if request.args.get('sort') == 'gender' %}selected{% endif %}>Sort by Gender</option>
-      </select>
+    <form method="get" class="ms-3">
+        <select class="form-select" name="sort" onchange="this.form.submit()">
+            <option value="id" {% if request.args.get('sort') == 'id' %}selected{% endif %}>Sort by ID Number</option>
+            <option value="first_name" {% if request.args.get('sort') == 'first_name' %}selected{% endif %}>Sort by First Name</option>
+            <option value="last_name" {% if request.args.get('sort') == 'last_name' %}selected{% endif %}>Sort by Last Name</option>
+            <option value="program" {% if request.args.get('sort') == 'program' %}selected{% endif %}>Sort by Program</option>
+            <option value="year" {% if request.args.get('sort') == 'year' %}selected{% endif %}>Sort by Year</option>
+            <option value="gender" {% if request.args.get('sort') == 'gender' %}selected{% endif %}>Sort by Gender</option>
+        </select>
     </form>
-  </div>
+</div>
 
-  <!-- Table -->
-  <div class="table-responsive">
+<!-- Students Table -->
+<div class="table-responsive">
     <table class="table table-striped table-hover align-middle">
-      <thead>
-        <tr>
-          <th scope="col">#</th>
-          <th scope="col">ID Number</th>
-          <th scope="col">First Name</th>
-          <th scope="col">Last Name</th>
-          <th scope="col">Course</th>
-          <th scope="col">Year</th>
-          <th scope="col">Gender</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for student in students %}
-        <tr>
-          <th scope="row">{{ loop.index }}</th>
-          <td>{{ student.id }}</td>
-          <td>{{ student.first_name }}</td>
-          <td>{{ student.last_name }}</td>
-          <td>{{ student.course }}</td>
-          <td>{{ student.year }}</td>
-          <td>{{ student.gender }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>ID Number</th>
+                <th>Name</th>
+                <th>Program</th>
+                <th>Year</th>
+                <th>Gender</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in students %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ student.id_number }}</td>
+                <td>{{ student.first_name }} {{ student.last_name }}</td>
+                <td>{{ student.program_name }} ({{ student.program_code }})</td>
+                <td>{{ student.year }}</td>
+                <td>{{ student.gender }}</td>
+                <td>
+                    <div class="btn-group">
+                        <a href="{{ url_for('students.update', id_number=student.id_number) }}" class="btn btn-sm btn-warning">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <button type="button" class="btn btn-sm btn-danger" 
+                                onclick="deleteStudent('{{ student.id_number }}')">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
     </table>
-  </div>
+</div>
+<!-- Add Student Modal -->
+<div class="modal fade" id="addStudentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Student</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('students.add_student') }}">
+                <div class="modal-body">
+                    {{ form.hidden_tag() }}  <!-- CSRF token and other hidden fields -->
+                    
+                    <div class="mb-3">
+                        {{ form.id_year.label(class="form-label") }}
+                        {{ form.id_year(class="form-control") }}
+                        <div class="form-text">Set the year prefix for the ID (e.g. 2025). Default is current year.</div>
+                        {% if form.id_year.errors %}
+                            <div class="text-danger">
+                                {% for error in form.id_year.errors %}
+                                    <small>{{ error }}</small><br>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
 
-  <!-- Pagination -->
-  <nav aria-label="Page navigation">
-    <ul class="pagination justify-content-center">
-      <li class="page-item disabled">
-        <a class="page-link">Previous</a>
-      </li>
-      <li class="page-item active">
-        <a class="page-link" href="#">1</a>
-      </li>
-      <li class="page-item">
-        <a class="page-link" href="#">2</a>
-      </li>
-      <li class="page-item">
-        <a class="page-link" href="#">3</a>
-      </li>
-      <li class="page-item">
-        <a class="page-link" href="#">Next</a>
-      </li>
-    </ul>
-  </nav>
+                    <div class="mb-3">
+                        {{ form.id_number.label(class="form-label") }}
+                        {{ form.id_number(class="form-control", readonly=True) }}
+                        {% if form.id_number.errors %}
+                            <div class="text-danger">
+                                {% for error in form.id_number.errors %}
+                                    <small>{{ error }}</small><br>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.first_name.label(class="form-label") }}
+                        {{ form.first_name(class="form-control") }}
+                        {% if form.first_name.errors %}
+                            <div class="text-danger">
+                                {% for error in form.first_name.errors %}
+                                    <small>{{ error }}</small><br>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.last_name.label(class="form-label") }}
+                        {{ form.last_name(class="form-control") }}
+                        {% if form.last_name.errors %}
+                            <div class="text-danger">
+                                {% for error in form.last_name.errors %}
+                                    <small>{{ error }}</small><br>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.program_code.label(class="form-label") }}
+                        {{ form.program_code(class="form-select") }}
+                        {% if form.program_code.errors %}
+                            <div class="text-danger">
+                                {% for error in form.program_code.errors %}
+                                    <small>{{ error }}</small><br>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.year.label(class="form-label") }}
+                        {{ form.year(class="form-select") }}
+                        {% if form.year.errors %}
+                            <div class="text-danger">
+                                {% for error in form.year.errors %}
+                                    <small>{{ error }}</small><br>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.gender.label(class="form-label") }}
+                        {{ form.gender(class="form-select") }}
+                        {% if form.gender.errors %}
+                            <div class="text-danger">
+                                {% for error in form.gender.errors %}
+                                    <small>{{ error }}</small><br>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    {{ form.submit(class="btn btn-primary") }}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Student Modal -->
+<div class="modal fade" id="editStudentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Student</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('students.update') }}">
+                <div class="modal-body">
+                    {% if edit_form %}
+                        {{ edit_form.hidden_tag() }}
+                        <input type="hidden" name="original_id" value="{{ edit_form.id_number.data }}">
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        {{ edit_form.id_number.label(class="form-label") if edit_form else form.id_number.label(class="form-label") }}
+                        {{ edit_form.id_number(class="form-control") if edit_form else form.id_number(class="form-control") }}
+                        {% if edit_form and edit_form.id_number.errors %}
+                            <div class="text-danger">
+                                {% for error in edit_form.id_number.errors %}
+                                    <small>{{ error }}</small><br>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ edit_form.first_name.label(class="form-label") if edit_form else form.first_name.label(class="form-label") }}
+                        {{ edit_form.first_name(class="form-control") if edit_form else form.first_name(class="form-control") }}
+                        {% if edit_form and edit_form.first_name.errors %}
+                            <div class="text-danger">
+                                {% for error in edit_form.first_name.errors %}
+                                    <small>{{ error }}</small><br>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ edit_form.last_name.label(class="form-label") if edit_form else form.last_name.label(class="form-label") }}
+                        {{ edit_form.last_name(class="form-control") if edit_form else form.last_name(class="form-control") }}
+                        {% if edit_form and edit_form.last_name.errors %}
+                            <div class="text-danger">
+                                {% for error in edit_form.last_name.errors %}
+                                    <small>{{ error }}</small><br>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ edit_form.program_code.label(class="form-label") if edit_form else form.program_code.label(class="form-label") }}
+                        {{ edit_form.program_code(class="form-select") if edit_form else form.program_code(class="form-select") }}
+                        {% if edit_form and edit_form.program_code.errors %}
+                            <div class="text-danger">
+                                {% for error in edit_form.program_code.errors %}
+                                    <small>{{ error }}</small><br>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ edit_form.year.label(class="form-label") if edit_form else form.year.label(class="form-label") }}
+                        {{ edit_form.year(class="form-select") if edit_form else form.year(class="form-select") }}
+                        {% if edit_form and edit_form.year.errors %}
+                            <div class="text-danger">
+                                {% for error in edit_form.year.errors %}
+                                    <small>{{ error }}</small><br>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ edit_form.gender.label(class="form-label") if edit_form else form.gender.label(class="form-label") }}
+                        {{ edit_form.gender(class="form-select") if edit_form else form.gender(class="form-select") }}
+                        {% if edit_form and edit_form.gender.errors %}
+                            <div class="text-danger">
+                                {% for error in edit_form.gender.errors %}
+                                    <small>{{ error }}</small><br>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    {% if edit_form %}
+                        {{ edit_form.submit(class="btn btn-primary") }}
+                    {% else %}
+                        {{ form.submit(class="btn btn-primary") }}
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteStudentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Student</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete this student? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteStudentForm" method="POST" class="d-inline">
+                    <input type="hidden" name="id_number" id="delete_student_id" value="">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
-<!-- Bootstrap Icons (needed for arrows) -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<!-- JavaScript -->
+<script>
+function deleteStudent(id) {
+    // Set up the delete form and show confirmation modal
+    document.getElementById('deleteStudentForm').action = `/students/delete`;
+    var idField = document.getElementById('delete_student_id');
+    if (idField) idField.value = id;
+    var deleteModal = new bootstrap.Modal(document.getElementById('deleteStudentModal'));
+    deleteModal.show();
+}
+
+// Flash messages auto-hide
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        var alerts = document.getElementsByClassName('alert');
+        for(var i = 0; i < alerts.length; i++) {
+            if(!alerts[i].classList.contains('alert-error')) {
+                alerts[i].style.display = 'none';
+            }
+        }
+    }, 3000);
+});
+
+// When ID year input changes, request next id for that year and update the id field
+document.addEventListener('DOMContentLoaded', function() {
+    const idYearInput = document.getElementById('id_year');
+    if (!idYearInput) return;
+
+    const updateNextId = (year) => {
+        if (!year) return;
+        fetch(`/students/next-id/${encodeURIComponent(year)}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data && data.next_id) {
+                    const idField = document.getElementById('id_number');
+                    if (idField) idField.value = data.next_id;
+                }
+            })
+            .catch(err => console.error('Error fetching next id:', err));
+    };
+
+    // update on change and on blur
+    idYearInput.addEventListener('change', (e) => updateNextId(e.target.value));
+    idYearInput.addEventListener('blur', (e) => updateNextId(e.target.value));
+});
+</script>
+
+{% if show_edit_modal %}
+    <script>
+        // When the page loads, open the edit modal (server-side flagged)
+        document.addEventListener('DOMContentLoaded', function() {
+            var editModalEl = document.getElementById('editStudentModal');
+            if (editModalEl) {
+                var modal = new bootstrap.Modal(editModalEl);
+                modal.show();
+            }
+        });
+    </script>
+{% endif %}
 {% endblock %}
