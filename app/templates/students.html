@@ -70,10 +70,43 @@
                     </div>
                 </td>
             </tr>
+            {% else %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted">No students found.</td>
+                </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+
+
+<!-- Pagination -->
+  <nav aria-label="Student pagination">
+    <ul class="pagination justify-content-center">
+      <li class="page-item {% if not prev_url %}disabled{% endif %}">
+        <a class="page-link" href="{{ prev_url or '#' }}" tabindex="-1">Previous</a>
+      </li>
+      {% for page_num in range(max(1, pagination.page - 2), min(pagination.pages + 1, pagination.page + 3)) %}
+      <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+        <a class="page-link" href="{{ url_for('students.students_list', page=page_num, q=request.args.get('q'), sort=request.args.get('sort')) }}">{{ page_num }}</a>
+      </li>
+      {% endfor %}
+      <li class="page-item {% if not next_url %}disabled{% endif %}">
+        <a class="page-link" href="{{ next_url or '#' }}">Next</a>
+      </li>
+    </ul>
+    <p class="text-center text-muted mt-2">
+      Showing {{ (pagination.page - 1) * pagination.per_page + 1 }} to {{ min(pagination.page * pagination.per_page, pagination.total) }} of {{ pagination.total }} students
+    </p>
+  </nav>
+</div>
+
+
+
+
+
+
+
 <!-- Add Student Modal -->
 <div class="modal fade" id="addStudentModal" tabindex="-1">
     <div class="modal-dialog">
@@ -194,10 +227,23 @@
                         {{ edit_form.hidden_tag() }}
                         <input type="hidden" name="original_id" value="{{ edit_form.id_number.data }}">
                     {% endif %}
-                    
+
+                    <div class="mb-3">
+                        {{ edit_form.id_year.label(class="form-label") if edit_form else form.id_year.label(class="form-label") }}
+                        {{ edit_form.id_year(class="form-control") if edit_form else form.id_year(class="form-control") }}
+                        <div class="form-text">Set the year prefix for the ID (e.g. 2025). Changing this will update the ID number.</div>
+                        {% if edit_form and edit_form.id_year.errors %}
+                            <div class="text-danger">
+                                {% for error in edit_form.id_year.errors %}
+                                    <small>{{ error }}</small><br>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
                     <div class="mb-3">
                         {{ edit_form.id_number.label(class="form-label") if edit_form else form.id_number.label(class="form-label") }}
-                        {{ edit_form.id_number(class="form-control") if edit_form else form.id_number(class="form-control") }}
+                        {{ edit_form.id_number(class="form-control", readonly=True) if edit_form else form.id_number(class="form-control") }}
                         {% if edit_form and edit_form.id_number.errors %}
                             <div class="text-danger">
                                 {% for error in edit_form.id_number.errors %}
@@ -329,25 +375,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // When ID year input changes, request next id for that year and update the id field
 document.addEventListener('DOMContentLoaded', function() {
-    const idYearInput = document.getElementById('id_year');
-    if (!idYearInput) return;
+    const idYearInputs = document.querySelectorAll('#id_year, #edit-id_year');
+    idYearInputs.forEach(idYearInput => {
+        if (!idYearInput) return;
 
-    const updateNextId = (year) => {
-        if (!year) return;
-        fetch(`/students/next-id/${encodeURIComponent(year)}`)
-            .then(r => r.json())
-            .then(data => {
-                if (data && data.next_id) {
-                    const idField = document.getElementById('id_number');
-                    if (idField) idField.value = data.next_id;
-                }
-            })
-            .catch(err => console.error('Error fetching next id:', err));
-    };
+        const updateNextId = (year, input) => {
+            if (!year) return;
+            fetch(`/students/next-id/${encodeURIComponent(year)}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data && data.next_id) {
+                        const idField = input.closest('.modal-body').querySelector('#id_number, #edit-id_number');
+                        if (idField) idField.value = data.next_id;
+                    }
+                })
+                .catch(err => console.error('Error fetching next id:', err));
+        };
 
-    // update on change and on blur
-    idYearInput.addEventListener('change', (e) => updateNextId(e.target.value));
-    idYearInput.addEventListener('blur', (e) => updateNextId(e.target.value));
+        // update on change and on blur
+        idYearInput.addEventListener('change', (e) => updateNextId(e.target.value, e.target));
+        idYearInput.addEventListener('blur', (e) => updateNextId(e.target.value, e.target));
+    });
 });
 </script>
 

@@ -77,13 +77,35 @@ class Students:
             db_pool.putconn(conn)
 
     @staticmethod
-    def get_all(search=None, sort_by=None):
-        """Return all students with program details joined."""
+    def get_all(search=None, sort_by=None, page=1, per_page=10):
+        """Return paginated students with program details joined."""
         conn = db_pool.getconn()
         try:
             with conn.cursor() as cursor:
+                # First, get total count for pagination
+                count_query = """
+                    SELECT COUNT(*)
+                    FROM students s
+                    LEFT JOIN programs p ON s.program_code = p.program_code
+                    LEFT JOIN colleges c ON p.college_code = c.college_code
+                """
+                count_params = []
+
+                if search:
+                    count_query += """
+                    WHERE LOWER(s.id_number) LIKE LOWER(%s)
+                    OR LOWER(s.first_name) LIKE LOWER(%s)
+                    OR LOWER(s.last_name) LIKE LOWER(%s)
+                    """
+                    search_term = f"%{search}%"
+                    count_params.extend([search_term, search_term, search_term])
+
+                cursor.execute(count_query, count_params)
+                total = cursor.fetchone()[0]
+
+                # Now get paginated results
                 query = """
-                    SELECT s.id_number, s.first_name, s.last_name, s.program_code, 
+                    SELECT s.id_number, s.first_name, s.last_name, s.program_code,
                            s.year_level, s.gender, p.program_name, c.college_name
                     FROM students s
                     LEFT JOIN programs p ON s.program_code = p.program_code
@@ -92,12 +114,11 @@ class Students:
                 params = []
 
                 if search:
-                    query += """ 
+                    query += """
                     WHERE LOWER(s.id_number) LIKE LOWER(%s)
                     OR LOWER(s.first_name) LIKE LOWER(%s)
                     OR LOWER(s.last_name) LIKE LOWER(%s)
                     """
-                    search_term = f"%{search}%"
                     params.extend([search_term, search_term, search_term])
 
                 # Add sorting
@@ -115,11 +136,16 @@ class Students:
                 else:
                     query += " ORDER BY s.id_number"
 
+                # Add pagination
+                offset = (page - 1) * per_page
+                query += " LIMIT %s OFFSET %s"
+                params.extend([per_page, offset])
+
                 cursor.execute(query, params)
                 rows = cursor.fetchall()
-                result = []
+                items = []
                 for r in rows:
-                    result.append({
+                    items.append({
                         "id_number": r[0],
                         "first_name": r[1],
                         "last_name": r[2],
@@ -129,7 +155,16 @@ class Students:
                         "program_name": r[6],
                         "college_name": r[7]
                     })
-                return result
+
+                total_pages = (total + per_page - 1) // per_page  # Ceiling division
+
+                return {
+                    'items': items,
+                    'total': total,
+                    'pages': total_pages,
+                    'page': page,
+                    'per_page': per_page
+                }
         finally:
             db_pool.putconn(conn)
 

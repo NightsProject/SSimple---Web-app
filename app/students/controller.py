@@ -10,17 +10,21 @@ def students_list():
     if 'user_id' not in session:
         return redirect(url_for('user.login'))
 
-    # Get search and sort parameters
+    # Get search, sort, and pagination parameters
     search = request.args.get('q', '')
     sort_by = request.args.get('sort', 'id')
+    page = int(request.args.get('page', 1))
+    per_page = int(request.args.get('per_page', 10))
 
-    # Get students list with search and sort applied
-    students = Students.get_all(search=search, sort_by=sort_by)
+    # Get paginated students list with search and sort applied
+    students_data = Students.get_all(search=search, sort_by=sort_by, page=page, per_page=per_page)
+    students = students_data['items']
+
     # prepare add/edit form and program choices so modal options are available on page load
     form = StudentForm()
     programs = Programs.get_all()
     form.program_code.choices = [(p['code'], f"{p['code']} - {p['name']}") for p in programs]
-    
+
     # default id_year to current year and prefill next id for that year
     try:
         from datetime import datetime
@@ -33,12 +37,24 @@ def students_list():
     except Exception:
         form.id_number.data = form.id_number.data or "1"
 
+    # Generate pagination URLs
+    def url_for_page(page_num):
+        args = request.args.copy()
+        args['page'] = page_num
+        return url_for('students.students_list', **args)
+
+    prev_url = url_for_page(page - 1) if page > 1 else None
+    next_url = url_for_page(page + 1) if page < students_data['pages'] else None
+
     return render_template(
         'students.html',
         username=session.get('username'),
         students=students,
         form=form,
-        active_page="students"
+        active_page="students",
+        pagination=students_data,
+        prev_url=prev_url,
+        next_url=next_url
     )
 
 
@@ -111,7 +127,7 @@ def update():
         return redirect(url_for('user.login'))
 
     # Prepare form and program choices for either GET or POST
-    form = StudentForm()
+    form = StudentForm(prefix='edit')
     programs = Programs.get_all()
     form.program_code.choices = [(p['code'], f"{p['code']} - {p['name']}") for p in programs]
 
@@ -129,6 +145,11 @@ def update():
 
         # pre-fill form from student record
         form.id_number.data = student.get('id_number')
+        # Extract id_year from id_number
+        if '-' in id_number:
+            form.id_year.data = id_number.split('-')[0]
+        else:
+            form.id_year.data = ''
         form.first_name.data = student.get('first_name')
         form.last_name.data = student.get('last_name')
         form.program_code.data = student.get('program_code')
@@ -139,7 +160,8 @@ def update():
         add_form = StudentForm()
         add_form.program_code.choices = [(p['code'], f"{p['code']} - {p['name']}") for p in programs]
 
-        students_list = Students.get_all()
+        students_list_data = Students.get_all()
+        students_list = students_list_data['items']
         return render_template(
             'students.html',
             username=session.get('username'),
@@ -148,7 +170,10 @@ def update():
             edit_form=form,
             show_edit_modal=True,
             edit_id=id_number,
-            active_page="students"
+            active_page="students",
+            pagination=students_list_data,
+            prev_url=None,
+            next_url=None
         )
 
     # POST: perform update
@@ -195,11 +220,12 @@ def update():
         else:
             # validation failed
             flash('Please correct the errors in the form.', 'danger')
-            students_list = Students.get_all()
+            students_list_data = Students.get_all()
+            students_list = students_list_data['items']
             # prepare add form so page has program choices
             add_form = StudentForm()
             add_form.program_code.choices = [(p['code'], f"{p['code']} - {p['name']}") for p in programs]
-            return render_template('students.html', form=add_form, edit_form=form, students=students_list, show_edit_modal=True, edit_id=request.form.get('original_id'), username=session.get('username'), active_page="students")
+            return render_template('students.html', form=add_form, edit_form=form, students=students_list, show_edit_modal=True, edit_id=request.form.get('original_id'), username=session.get('username'), active_page="students", pagination=students_list_data, prev_url=None, next_url=None)
 
 
 @students_bp.route('/students/delete', methods=['POST'])
