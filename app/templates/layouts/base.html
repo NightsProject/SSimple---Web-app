@@ -276,7 +276,6 @@
         </nav>
         <!-- Main content -->
         <main class="col px-md-4 py-4">
-          {% block content %}
           {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
               {% for category, message in messages %}
@@ -287,6 +286,7 @@
               {% endfor %}
             {% endif %}
           {% endwith %}
+          {% block content %}
           {% endblock %}
         </main>
       </div>

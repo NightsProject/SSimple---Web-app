@@ -41,11 +41,11 @@
           <td>{{ program.name }}</td>
           <td>{{ program.college_name or program.college_code or '-' }}</td>
           <td>
-            <a href="{{ url_for('programs.update', code=program.code) }}" class="btn btn-sm btn-warning">Edit</a>
+            <a href="{{ url_for('programs.update', code=program.code) }}" class="btn btn-sm btn-warning"><i class="bi bi-pencil"></i></a>
             <form action="{{ url_for('programs.delete') }}" method="POST" style="display:inline;">
               <input type="hidden" name="code" value="{{ program.code }}">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this program?');">Delete</button>
+              <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this program?');"> <i class="bi bi-trash"></i></button>
             </form>
           </td>
         </tr>
