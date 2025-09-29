@@ -104,30 +104,63 @@
     {% set total_pages = pagination['pages'] %}
     {% set per_page = pagination['per_page'] %}
 
-    {% set start_page = (current_page - 2)|int %}
-    {% if start_page < 1 %}
-      {% set start_page = 1 %}
+    <!-- Always show 1 -->
+    {% if 1 != current_page %}
+      <li class="page-item">
+        <a class="page-link"
+           href="{{ url_for('students.students_list', page=1, q=request.args.get('q', ''), sort=request.args.get('sort', 'id')) }}">
+           1
+        </a>
+      </li>
+    {% else %}
+      <li class="page-item active" aria-current="page">
+        <span class="page-link editable-page">{{ current_page }}</span>
+      </li>
     {% endif %}
 
-    {% set end_page = (current_page + 2)|int %}
-    {% if end_page > total_pages %}
-      {% set end_page = total_pages %}
+    <!-- Show 2 if not current -->
+    {% if total_pages >= 2 and 2 != current_page %}
+      <li class="page-item">
+        <a class="page-link"
+           href="{{ url_for('students.students_list', page=2, q=request.args.get('q', ''), sort=request.args.get('sort', 'id')) }}">
+           2
+        </a>
+      </li>
+    {% elif 2 == current_page %}
+      <li class="page-item active" aria-current="page">
+        <span class="page-link editable-page">{{ current_page }}</span>
+      </li>
     {% endif %}
 
-    {% for page_num in range(start_page, end_page + 1) %}
-      {% if page_num == current_page %}
-        <li class="page-item active" aria-current="page">
-          <span class="page-link">{{ page_num }}</span>
-        </li>
-      {% else %}
+    <!-- Show 3 if not current -->
+    {% if total_pages >= 3 and 3 != current_page %}
+      <li class="page-item">
+        <a class="page-link"
+           href="{{ url_for('students.students_list', page=3, q=request.args.get('q', ''), sort=request.args.get('sort', 'id')) }}">
+           3
+        </a>
+      </li>
+    {% elif 3 == current_page %}
+      <li class="page-item active" aria-current="page">
+        <span class="page-link editable-page">{{ current_page }}</span>
+      </li>
+    {% endif %}
+
+    <!-- Show last page if not already shown -->
+    {% if total_pages > 3 %}
+      {% if total_pages != current_page %}
         <li class="page-item">
           <a class="page-link"
-             href="{{ url_for('students.students_list', page=page_num, q=request.args.get('q', ''), sort=request.args.get('sort', 'id')) }}">
-             {{ page_num }}
+             href="{{ url_for('students.students_list', page=total_pages, q=request.args.get('q', ''), sort=request.args.get('sort', 'id')) }}">
+             {{ total_pages }}
           </a>
         </li>
+      {% else %}
+        <li class="page-item active" aria-current="page">
+          <span class="page-link editable-page">{{ current_page }}</span>
+        </li>
       {% endif %}
-    {% endfor %}
+    {% endif %}
 
     <!-- Next Button -->
     {% if next_url %}
@@ -441,6 +474,56 @@ document.addEventListener('DOMContentLoaded', function() {
         idYearInput.addEventListener('change', (e) => updateNextId(e.target.value, e.target));
         idYearInput.addEventListener('blur', (e) => updateNextId(e.target.value, e.target));
     });
+});
+
+// Pagination editable page functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const attachDoubleClickHandler = (span) => {
+        span.addEventListener('dblclick', function() {
+            const currentPage = parseInt(this.textContent);
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.value = currentPage;
+            input.min = 1;
+            input.max = {{ total_pages }};
+            input.className = 'form-control form-control-sm d-inline-block';
+            input.style.width = '60px';
+            input.style.border = 'none';
+            input.style.background = 'transparent';
+            input.style.color = '#456882';
+
+            const li = this.parentElement;
+            li.innerHTML = '';
+            li.appendChild(input);
+            input.focus();
+            input.select();
+
+            const navigate = () => {
+                const newPage = parseInt(input.value);
+                if (newPage >= 1 && newPage <= {{ total_pages }} && newPage !== currentPage) {
+                    const url = new URL(window.location);
+                    url.searchParams.set('page', newPage);
+                    window.location.href = url.toString();
+                } else {
+                    li.innerHTML = '<span class="page-link editable-page">' + currentPage + '</span>';
+                    attachDoubleClickHandler(li.querySelector('.editable-page'));
+                }
+            };
+
+            input.addEventListener('blur', navigate);
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    navigate();
+                } else if (e.key === 'Escape') {
+                    li.innerHTML = '<span class="page-link editable-page">' + currentPage + '</span>';
+                    attachDoubleClickHandler(li.querySelector('.editable-page'));
+                }
+            });
+        });
+    };
+
+    const editablePages = document.querySelectorAll('.editable-page');
+    editablePages.forEach(attachDoubleClickHandler);
 });
 </script>
 
