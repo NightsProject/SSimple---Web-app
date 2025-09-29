@@ -35,7 +35,7 @@ def list():
     prev_url = url_for_page(page - 1) if page > 1 else None
     next_url = url_for_page(page + 1) if page < programs_data['pages'] else None
 
-    return render_template('programs.html', program_form=program_form, programs=programs_list, colleges=colleges_list, username=session.get('username'), pagination=programs_data, prev_url=prev_url, next_url=next_url)
+    return render_template('programs.html', program_form=program_form, programs=programs_list, colleges=colleges_list, username=session.get('username'), active_page="programs", pagination=programs_data, prev_url=prev_url, next_url=next_url)
 
 
 @programs_bp.route('/programs/add', methods=['POST'])

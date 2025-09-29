@@ -17,8 +17,8 @@ class Students:
             with conn.cursor() as cursor:
                 cursor.execute(
                     """
-                    INSERT INTO students (id_number, first_name, last_name, program_code, year_level, gender)
-                    VALUES (%s, %s, %s, %s, %s, %s)
+                    INSERT INTO students (id_number, first_name, last_name, program_code, year_level, gender, date_registered)
+                    VALUES (%s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
                     ON CONFLICT (id_number) DO NOTHING
                     """,
                     (self.id_number, self.first_name, self.last_name, self.program_code, self.year, self.gender)
@@ -106,7 +106,7 @@ class Students:
                 # Now get paginated results
                 query = """
                     SELECT s.id_number, s.first_name, s.last_name, s.program_code,
-                           s.year_level, s.gender, p.program_name, c.college_name
+                           s.year_level, s.gender, p.program_name, c.college_name, s.date_registered
                     FROM students s
                     LEFT JOIN programs p ON s.program_code = p.program_code
                     LEFT JOIN colleges c ON p.college_code = c.college_code
@@ -153,7 +153,8 @@ class Students:
                         "year": r[4],
                         "gender": r[5],
                         "program_name": r[6],
-                        "college_name": r[7]
+                        "college_name": r[7],
+                        "date_registered": r[8]
                     })
 
                 total_pages = (total + per_page - 1) // per_page  # Ceiling division
@@ -175,7 +176,7 @@ class Students:
             with conn.cursor() as cursor:
                 cursor.execute(
                     """
-                    SELECT id_number, first_name, last_name, program_code, year_level, gender 
+                    SELECT id_number, first_name, last_name, program_code, year_level, gender, date_registered
                     FROM students WHERE id_number = %s
                     """,
                     (id_number,)
@@ -189,7 +190,8 @@ class Students:
                     "last_name": row[2],
                     "program_code": row[3],
                     "year": row[4],
-                    "gender": row[5]
+                    "gender": row[5],
+                    "date_registered": row[6]
                 }
         finally:
             db_pool.putconn(conn)
@@ -202,7 +204,7 @@ class Students:
                 cursor.execute(
                     """
                     UPDATE students
-                    SET id_number = %s, first_name = %s, last_name = %s, 
+                    SET id_number = %s, first_name = %s, last_name = %s,
                         program_code = %s, year_level = %s, gender = %s
                     WHERE id_number = %s
                     """,

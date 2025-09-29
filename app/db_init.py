@@ -130,6 +130,7 @@ def ready_student_table():
         year_level VARCHAR(20),
         gender VARCHAR(10) CHECK (gender IN ('Male', 'Female', 'Other')),
         program_code VARCHAR(20),
+        date_registered TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT fk_program
             FOREIGN KEY (program_code)
             REFERENCES programs(program_code)
@@ -138,6 +139,12 @@ def ready_student_table():
     )
     """
     execute_query(query)
+
+    # Add column if not exists
+    alter_query = """
+    ALTER TABLE students ADD COLUMN IF NOT EXISTS date_registered TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    """
+    execute_query(alter_query)
 
     insert_query = """
     INSERT INTO students (id_number, first_name, last_name, year_level, gender, program_code) VALUES %s

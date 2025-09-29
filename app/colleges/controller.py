@@ -35,6 +35,7 @@ def list():
         college_form=college_form, 
         colleges=colleges, 
         username=session.get('username'), 
+        active_page="colleges",
         pagination=colleges_data, 
         prev_url=prev_url, 
         next_url=next_url
