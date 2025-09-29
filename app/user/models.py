@@ -4,10 +4,11 @@ import hashlib
 
 class Users:
 
-    def __init__(self, username=None, password=None, email=None):
+    def __init__(self, username=None, password=None, email=None, profile_picture=None):
         self.username = username
         self.password = password
         self.email = email
+        self.profile_picture = profile_picture or 'https://via.placeholder.com/36'
 
     @classmethod
     def authenticate(cls, username, password):
@@ -26,25 +27,26 @@ class Users:
         try:
             with conn.cursor() as cursor:
                 cursor.execute(
-                    "SELECT id, username, email, user_password FROM users WHERE username = %s",
+                    "SELECT id, username, email, user_password, profile_picture FROM users WHERE username = %s",
                     (username,)
                 )
                 user_record = cursor.fetchone()
-                
+
                 if user_record:
-                    # user_record structure: (id, username, email, user_password)
-                    user_id, db_username, db_email, stored_password_hash = user_record
-                    
+                    # user_record structure: (id, username, email, user_password, profile_picture)
+                    user_id, db_username, db_email, stored_password_hash, profile_picture = user_record
+
                     # 2. Hash the input password using the same MD5 method used during 'add'
                     input_password_hash = hashlib.md5(password.encode()).hexdigest()
-                    
+
                     # 3. Compare hashes
                     if input_password_hash == stored_password_hash:
                         # Return user details upon successful authentication
                         return {
                             'id': user_id,
                             'username': db_username,
-                            'email': db_email
+                            'email': db_email,
+                            'profile_picture': profile_picture
                         }
 
         except Exception as e:
@@ -64,10 +66,10 @@ class Users:
                 # Use hashlib.md5 to hash the password before insertion
                 cursor.execute(
                     """
-                    INSERT INTO users(username, user_password, email)
-                    VALUES (%s, %s, %s)
+                    INSERT INTO users(username, user_password, email, profile_picture)
+                    VALUES (%s, %s, %s, %s)
                     """,
-                    (self.username, hashlib.md5(self.password.encode()).hexdigest(), self.email)
+                    (self.username, hashlib.md5(self.password.encode()).hexdigest(), self.email, self.profile_picture)
                 )
                 conn.commit()
         finally:

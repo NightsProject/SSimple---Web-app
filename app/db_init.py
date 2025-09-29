@@ -228,7 +228,8 @@ def ready_users_table():
         id SERIAL PRIMARY KEY,
         username VARCHAR(20) UNIQUE,
         email VARCHAR(50),
-        user_password VARCHAR(50)
+        user_password VARCHAR(50),
+        profile_picture VARCHAR(255) DEFAULT 'https://via.placeholder.com/36'
     );
     """
     execute_query(query)

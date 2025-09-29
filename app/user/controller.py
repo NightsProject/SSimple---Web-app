@@ -16,8 +16,9 @@ def login():
         
         if user:
             flash(f'Welcome back, {form.username.data}!', 'success')
-            session["user_id"] = user['id']  
-            session["username"] = user['username'] 
+            session["user_id"] = user['id']
+            session["username"] = user['username']
+            session["profile_picture"] = user['profile_picture']
             return redirect(url_for('dashboard.dashboard'))
         else:
             flash('Invalid username or password.', 'danger')
