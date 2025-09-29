@@ -48,7 +48,7 @@
       <tbody>
         {% for college in colleges %}
         <tr>
-          <th scope="row">{{ loop.index }}</th>
+          <th scope="row">{{ (pagination.page - 1) * pagination.per_page + loop.index }}</th>
           <td>{{ college.code }}</td>
           <td>{{ college.name }}</td>
           <td>

@@ -36,7 +36,7 @@
       <tbody>
         {% for program in programs %}
         <tr>
-          <td>{{ loop.index }}</td>
+          <td>{{ (pagination.page - 1) * pagination.per_page + loop.index }}</td>
           <td>{{ program.code }}</td>
           <td>{{ program.name }}</td>
           <td>{{ program.college_name or program.college_code or '-' }}</td>
