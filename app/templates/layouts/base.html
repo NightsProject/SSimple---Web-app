@@ -5,108 +5,278 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>SSimple</title>
 
-    <!-- Bootstrap CSS -->
+       <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" 
           rel="stylesheet" 
           integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" 
           crossorigin="anonymous">
 
+    
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" 
           href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 
     <style>
-      /* Sidebar styling */
+      html, body {
+        height: 100%;
+        margin: 0;
+        background-color: #D2C1B6;
+        color: #1B3C53;
+        font-family: "Segoe UI", Roboto, sans-serif;
+      }
+
+      /* Sidebar */
       .sidebar {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 100vh;
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 250px;
+        padding: 1rem;
+        background: rgba(27, 60, 83, 0.95);
+        backdrop-filter: blur(6px);
+        color: #fff;
+        border-right: 1px solid rgba(255,255,255,0.1);
+        box-shadow: 3px 0 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .sidebar .brand {
+        display: flex;
+        align-items: center;
+        font-weight: 600;
+        font-size: 1.3rem;
+        letter-spacing: 0.5px;
+        color: #fff;
+        margin-bottom: 1.5rem;
+      }
+
+      .sidebar .brand i {
+        font-size: 1.6rem;
+        margin-right: 8px;
+        color: #F2D5B1;
+      }
+
+      .sidebar hr {
+        border-color: rgba(255,255,255,0.15);
+        margin: 1rem 0;
+      }
+
+      /* Sidebar links */
+      .nav-link {
+        color: #dce3e8;
+        border-radius: 8px;
+        padding: 0.6rem 0.75rem;
+        display: flex;
+        align-items: center;
+        transition: all 0.3s ease;
+        position: relative;
+      }
+
+      .nav-link i {
+        margin-right: 10px;
+        font-size: 1.2rem;
+      }
+
+      .nav-link.active {
+        background: linear-gradient(90deg, #456882, #5b7b99);
+        color: #fff;
+        box-shadow: 0 0 10px rgba(91,123,153,0.3);
+      }
+
+      .nav-link.active::before {
+        content: "";
+        position: absolute;
+        left: -10px;
+        height: 100%;
+        width: 5px;
+        background-color: #F2D5B1;
+        border-radius: 2px;
+      }
+
+      .nav-link:hover {
+        background-color: rgba(255,255,255,0.1);
+        color: #fff;
+        transform: translateX(3px);
+      }
+
+      main {
+        margin-left: 250px;
+        padding: 2rem;
+        background-color: #D2C1B6;
         min-height: 100vh;
       }
-      @media (max-width: 767.98px) {
-        .sidebar {
-          min-height: auto;
-        }
+
+      /* Profile section */
+      .profile-section {
+        background: rgba(255,255,255,0.05);
+        padding: 0.8rem;
+        border-radius: 10px;
       }
-    </style>
-    
+
+      .profile-section img {
+        border: 2px solid #F2D5B1;
+      }
+
+      .dropdown-toggle {
+        color: #fff !important;
+      }
+
+      .dropdown-menu {
+        background-color: #234C6A;
+        border: none;
+        border-radius: 6px;
+      }
+
+      .dropdown-item {
+        color: #fff;
+        transition: background-color 0.3s ease;
+      }
+
+      .dropdown-item:hover {
+        background-color: #456882;
+      }
+
+      /* Buttons, alerts, cards */
+      .btn {
+        border-radius: 0.5rem;
+        transition: all 0.2s ease;
+      }
+      .alert {
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      }
+      /* General enhancements */
+      hr {
+        border-color: #456882;
+        opacity: 0.5;
+      }
+
+      
+      /* tab styling */
+      .card {
+        border: none;
+        border-radius: 1rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        background-color: #f9f7f6;
+      }
+
+      thead {
+        background: linear-gradient(90deg, #456882, #5b7b99);
+        color: #f1e8e3;
+      }
+
+      .table-hover tbody tr:hover {
+        background-color: rgba(69, 104, 130, 0.08);
+        transition: background-color 0.2s ease-in-out;
+      }
+
+      .btn {
+        border-radius: 0.5rem;
+        transition: all 0.2s ease;
+      }
+
+      .btn-success {
+        background-color: #4da67e;
+        border: none;
+      }
+      .btn-success:hover {
+        background-color: #3f8f6a;
+      }
+
+      .btn-outline-primary {
+        border-color: #456882;
+        color: #456882;
+      }
+      .btn-outline-primary:hover {
+        background-color: #456882;
+        color: #fff;
+      }
+
+      .form-select, .form-control {
+        border-radius: 0.4rem;
+      }
+
+      .pagination .page-link {
+        border: none;
+        color: #456882;
+      }
+      .pagination .active .page-link {
+        background-color: #456882;
+        border-radius: 0.4rem;
+      }
+
+      .modal-content {
+        border-radius: 1rem;
+      }
+      .modal-header {
+        background-color: #456882;
+        color: #fff;
+        border-top-left-radius: 1rem;
+        border-top-right-radius: 1rem;
+      }
+      .modal-footer {
+        background-color: #f2efed;
+      }
+</style>
+
   </head>
   <body>
-    <!-- Sidebar toggle for mobile -->
-    <div class="container-fluid">
-      <div class="row">
-        
-        <!-- Toggle button only visible on small screens -->
-        <div class="d-md-none bg-body-tertiary p-2">
-          <button class="btn btn-outline-primary w-100 mb-2" 
-                  type="button" 
-                  data-bs-toggle="collapse" 
-                  data-bs-target="#sidebarMenu">
-            ☰ Menu
-          </button>
-        </div>
-        
+    <div class="container-fluid p-0">
+      <div class="row g-0">
+
         <!-- Sidebar -->
-        <nav id="sidebarMenu" 
-             class="col-md-3 col-lg-2 d-md-block bg-body-tertiary sidebar collapse p-3">
-          <a href="/" 
-             class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-decoration-none">
-            <i class="bi bi-bootstrap-fill me-2 fs-3"></i>
-            <span class="fs-4">SSimple</span>
-          </a>
-          <hr>
-          <ul class="nav nav-pills flex-column mb-auto">
-            <li>
-              <a href="/" 
-                 class="nav-link {{ 'active' if active_page == 'dashboard' else 'link-body-emphasis' }}">
-                <i class="bi bi-speedometer2 me-2"></i>
-                Dashboard
-              </a>
-            </li>
-            <li>
-              <a href="/students" 
-                 class="nav-link {{ 'active' if active_page == 'students' else 'link-body-emphasis' }}">
-                <i class="bi bi-table me-2"></i>
-                Students
-              </a>
-            </li>
-            <li>
-              <a href="/programs" 
-                 class="nav-link {{ 'active' if active_page == 'programs' else 'link-body-emphasis' }}">
-                <i class="bi bi-grid me-2"></i>
-                Programs
-              </a>
-            </li>
-            <li>
-              <a href="/colleges" 
-                 class="nav-link {{ 'active' if active_page == 'colleges' else 'link-body-emphasis' }}">
-                <i class="bi bi-people-fill me-2"></i>
-                Colleges
-              </a>
-            </li>
-          </ul>
-          <hr>
-          <div class="dropdown">
-            <a href="#" 
-               class="d-flex align-items-center text-decoration-none dropdown-toggle" 
-               data-bs-toggle="dropdown" aria-expanded="false">
-              <img src="https://via.placeholder.com/32" 
-                   alt="profile" 
-                   width="32" height="32" 
-                   class="rounded-circle me-2">
-              <strong>Nights</strong>
+                
+        <nav class="sidebar">
+          <div>
+            <a href="/" class="brand text-decoration-none">
+              <i class="bi bi-bootstrap-fill"></i> SSimple
             </a>
-            <ul class="dropdown-menu text-small shadow">
-              <li><a class="dropdown-item" href="#">Settings</a></li>
-              <li><a class="dropdown-item" href="#">Profile</a></li>
-              <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item" href="{{ url_for('user.logout') }}">Sign out</a></li>
+            <hr>
+            <ul class="nav flex-column mb-auto">
+              <li>
+                <a href="/" class="nav-link {{ 'active' if active_page == 'dashboard' else '' }}">
+                  <i class="bi bi-speedometer2"></i> Dashboard
+                </a>
+              </li>
+              <li>
+                <a href="/students" class="nav-link {{ 'active' if active_page == 'students' else '' }}">
+                  <i class="bi bi-table"></i> Students
+                </a>
+              </li>
+              <li>
+                <a href="/programs" class="nav-link {{ 'active' if active_page == 'programs' else '' }}">
+                  <i class="bi bi-grid"></i> Programs
+                </a>
+              </li>
+              <li>
+                <a href="/colleges" class="nav-link {{ 'active' if active_page == 'colleges' else '' }}">
+                  <i class="bi bi-people-fill"></i> Colleges
+                </a>
+              </li>
             </ul>
           </div>
-        </nav>
 
+          <div class="profile-section">
+            <div class="dropdown">
+              <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                <img src="https://via.placeholder.com/36" alt="profile" width="36" height="36" class="rounded-circle me-2">
+                <strong>Nights</strong>
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end text-small shadow">
+                <li><a class="dropdown-item" href="#">Settings</a></li>
+                <li><a class="dropdown-item" href="#">Profile</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="{{ url_for('user.logout') }}">Sign out</a></li>
+              </ul>
+            </div>
+          </div>
+        </nav>
         <!-- Main content -->
-        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+        <main class="col px-md-4 py-4">
           {% block content %}
-          
-          <!-- 🔔 Flash Messages -->
           {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
               {% for category, message in messages %}
@@ -122,7 +292,7 @@
       </div>
     </div>
 
-    <!-- Bootstrap JS Bundle -->
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" 
             integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" 
             crossorigin="anonymous"></script>
