@@ -109,21 +109,6 @@ hr {
     margin: 2rem 0;
 }
 
-.alert {
-    border-radius: 10px;
-    border: none;
-}
-
-.alert-danger {
-    background: #f8d7da;
-    color: #721c24;
-}
-
-.alert-success {
-    background: #d4edda;
-    color: #155724;
-}
-
 /* Responsive adjustments */
 @media (max-width: 576px) {
     .card-header {

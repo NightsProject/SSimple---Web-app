@@ -100,9 +100,105 @@ class Users:
                 cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
                 conn.commit()
                 # Check if any row was affected to confirm deletion
-                return cursor.rowcount > 0 
+                return cursor.rowcount > 0
         except Exception as e:
             print(f"Error deleting user: {e}")
+            return False
+        finally:
+            db_pool.putconn(conn)
+
+    @classmethod
+    def get_user_with_info(cls, user_id):
+        """Get user data along with user_info."""
+        conn = db_pool.getconn()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    SELECT u.id, u.username, u.email, u.profile_picture,
+                           ui.fullname, ui.address, ui.birthday
+                    FROM users u
+                    LEFT JOIN user_info ui ON u.id = ui.user_id
+                    WHERE u.id = %s
+                """, (user_id,))
+                result = cursor.fetchone()
+                if result:
+                    return {
+                        'id': result[0],
+                        'username': result[1],
+                        'email': result[2],
+                        'profile_picture': result[3],
+                        'fullname': result[4],
+                        'address': result[5],
+                        'birthday': result[6]
+                    }
+        except Exception as e:
+            print(f"Error getting user with info: {e}")
+        finally:
+            db_pool.putconn(conn)
+        return None
+
+    @classmethod
+    def update_user(cls, user_id, data):
+        """Update user data."""
+        conn = db_pool.getconn()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    UPDATE users
+                    SET username = %s, email = %s, profile_picture = %s
+                    WHERE id = %s
+                """, (data['username'], data['email'], data['profile_picture'], user_id))
+                conn.commit()
+                return cursor.rowcount > 0
+        except Exception as e:
+            print(f"Error updating user: {e}")
+            return False
+        finally:
+            db_pool.putconn(conn)
+
+    @classmethod
+    def update_user_info(cls, user_id, data):
+        """Update or insert user_info data."""
+        conn = db_pool.getconn()
+        try:
+            with conn.cursor() as cursor:
+                # Check if user_info exists
+                cursor.execute("SELECT id FROM user_info WHERE user_id = %s", (user_id,))
+                exists = cursor.fetchone()
+                if exists:
+                    cursor.execute("""
+                        UPDATE user_info
+                        SET fullname = %s, address = %s, birthday = %s
+                        WHERE user_id = %s
+                    """, (data['fullname'], data['address'], data['birthday'], user_id))
+                else:
+                    cursor.execute("""
+                        INSERT INTO user_info (fullname, address, birthday, user_id)
+                        VALUES (%s, %s, %s, %s)
+                    """, (data['fullname'], data['address'], data['birthday'], user_id))
+                conn.commit()
+                return True
+        except Exception as e:
+            print(f"Error updating user info: {e}")
+            return False
+        finally:
+            db_pool.putconn(conn)
+
+    @classmethod
+    def update_password(cls, user_id, hashed_password):
+        """Update user password."""
+        conn = db_pool.getconn()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    UPDATE users
+                    SET user_password = %s
+                    WHERE id = %s
+                """, (hashed_password, user_id))
+                conn.commit()
+                return cursor.rowcount > 0
+        except Exception as e:
+            print(f"Error updating password: {e}")
             return False
         finally:
             db_pool.putconn(conn)

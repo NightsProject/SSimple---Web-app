@@ -1,4 +1,4 @@
-{% extends "layouts/master_layout.html" %}
+{% extends "layouts/login_layout.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
 
 {% block title %}Register{% endblock %}
@@ -10,16 +10,6 @@
             <h3>New User Registration</h3>
         </div>
         <div class="card-body">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
             <form method="POST" action="{{ url_for('.register') }}">
                 {{ form.hidden_tag() }}
                 <div class="form-group">
@@ -65,6 +55,18 @@
                             {% endfor %}
                         </div>
                     {% endif %}
+                </div>
+                <div class="form-group">
+                    {{ form.profile_picture.label }}
+                    {{ form.profile_picture(class="form-control") }}
+                    {% if form.profile_picture.errors %}
+                        <div class="text-danger">
+                            {% for error in form.profile_picture.errors %}
+                                <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <small class="form-text text-muted">Optional. Upload a profile picture (JPG, PNG, JPEG only).</small>
                 </div>
                 {{ form.submit(class="btn btn-success w-100") }}
             </form>

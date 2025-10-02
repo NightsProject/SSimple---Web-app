@@ -1,0 +1,128 @@
+{%- extends "bootstrap/base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block metas %}
+<meta name="csrf-token" content="{{ csrf_token() }}">
+{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+
+<!-- Notification Styles -->
+<style>
+  /* Notification container */
+  #notification-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* Notification box */
+  .notification {
+    border-radius: 10px;
+    padding: 1rem 1.5rem;
+    min-width: 280px;
+    max-width: 320px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    animation: fadeInSlide 0.4s ease forwards;
+    position: relative;
+    color: #fff;
+  }
+
+  /* Title and message */
+  .notification h6 {
+    margin: 0;
+    font-weight: 600;
+  }
+
+  .notification p {
+    margin: 5px 0 0;
+    font-size: 0.9rem;
+  }
+
+  /* Close button */
+  .notification .close-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 1.1rem;
+    opacity: 0.8;
+  }
+
+  .notification .close-btn:hover {
+    opacity: 1;
+  }
+
+  /* Animations */
+  @keyframes fadeInSlide {
+    from { opacity: 0; transform: translateY(-15px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeOut {
+    to { opacity: 0; transform: translateY(-10px); }
+  }
+
+  /* Category colors */
+  .notification.success { background: #28a745; } /* Green */
+  .notification.danger  { background: #dc3545; } /* Red */
+  .notification.warning { background: #ffc107; color: #212529; } /* Yellow/Black */
+  .notification.info    { background: #17a2b8; } /* Blue */
+  .notification.primary { background: #007bff; } /* Bootstrap blue */
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Notification container -->
+<div id="notification-container"></div>
+
+<!-- Page content -->
+{{ super() }}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+
+<!-- Notification Script -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <script>
+    (function() {
+      const container = document.getElementById('notification-container');
+      if (!container) return;
+
+      {% for category, message in messages %}
+      const notif = document.createElement('div');
+      notif.className = `notification {{ category }}`;
+      notif.innerHTML = `
+        <span class="close-btn">&times;</span>
+        <h6>{{ category|capitalize }}</h6>
+        <p>{{ message }}</p>
+      `;
+      container.appendChild(notif);
+
+      // Manual close
+      notif.querySelector('.close-btn').addEventListener('click', () => {
+        notif.style.animation = 'fadeOut 0.3s forwards';
+        setTimeout(() => notif.remove(), 300);
+      });
+
+      // Auto dismiss after 3 seconds
+      setTimeout(() => {
+        notif.style.animation = 'fadeOut 0.3s forwards';
+        setTimeout(() => notif.remove(), 300);
+      }, 3000);
+      {% endfor %}
+    })();
+  </script>
+  {% endif %}
+{% endwith %}
+{% endblock %}
