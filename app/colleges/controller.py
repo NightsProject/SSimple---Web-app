@@ -56,10 +56,12 @@ def add():
             return redirect(url_for("colleges.list"))
         except Exception as e:
             flash("Database error: " + str(e), "danger")
-            return render_template("colleges.html", form=form, show_modal=True)
+            #return render_template("colleges.html", form=form, show_modal=True)
     else:
-        flash("Failed to add college. Please check the form fields.", "danger")
-        return render_template("colleges.html", form=form, show_modal=True)
+           # Get colleges data for rendering the list
+        colleges_data = Colleges.get_all()
+        colleges = colleges_data['items']
+        return render_template("colleges.html", college_form=form, colleges=colleges, pagination=colleges_data, prev_url=None, next_url=None, show_modal=True)
 
 @colleges_bp.route("/colleges/update", methods=["GET", "POST"])
 def update():

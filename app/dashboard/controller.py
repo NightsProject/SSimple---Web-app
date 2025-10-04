@@ -13,7 +13,7 @@ def dashboard():
     program_counts_data = Dashboard.get_program_counts()
     monthly_counts = Dashboard.get_monthly_trend()
     recent_students = Dashboard.get_recent_students()
-
+    
     # Prepare chart data
     program_names = [p['program'] for p in program_counts_data]
     program_values = [p['count'] for p in program_counts_data]

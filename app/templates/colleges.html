@@ -186,10 +186,24 @@
           <div class="mb-3">
             {{ college_form.code.label(class="form-label") }}
             {{ college_form.code(class="form-control", id="collegeCode", placeholder="e.g., CC") }}
+            {% if college_form.code.errors %}
+              <div class="text-danger">
+                {% for error in college_form.code.errors %}
+                  <small>{{ error }}</small><br>
+                {% endfor %}
+              </div>
+            {% endif %}
           </div>
           <div class="mb-3">
             {{ college_form.name.label(class="form-label") }}
             {{ college_form.name(class="form-control", id="collegeName", placeholder="e.g., College of Computing") }}
+            {% if college_form.name.errors %}
+              <div class="text-danger">
+                {% for error in college_form.name.errors %}
+                  <small>{{ error }}</small><br>
+                {% endfor %}
+              </div>
+            {% endif %}
           </div>
         </div>
 
@@ -241,6 +255,18 @@
           var editModalEl = document.getElementById('editCollegeModal');
           if (editModalEl) {
             var modal = new bootstrap.Modal(editModalEl);
+            modal.show();
+          }
+        });
+      </script>
+    {% endif %}
+    {% if show_modal %}
+      <script>
+        // When the page loads, open the add modal (server-side flagged)
+        document.addEventListener('DOMContentLoaded', function() {
+          var addModalEl = document.getElementById('addCollegeModal');
+          if (addModalEl) {
+            var modal = new bootstrap.Modal(addModalEl);
             modal.show();
           }
         });
