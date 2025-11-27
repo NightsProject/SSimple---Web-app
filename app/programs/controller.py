@@ -111,8 +111,13 @@ def update():
     if request.method == 'POST':
         # ensure choices set before validation
         form.college_code.choices = choices
+        original_code = request.form.get('original_code')
+        if not original_code:
+            flash('Original program code is missing.', 'danger')
+            return redirect(url_for('programs.list'))
+        # Set original_code on form for validation
+        form.original_code = original_code
         if form.validate_on_submit():
-            original_code = request.form.get('original_code') or form.code.data
             new_code = form.code.data
             new_name = form.name.data
             college_code = form.college_code.data
@@ -136,7 +141,7 @@ def update():
             programs_list = programs_list_data['items']
             program_form = ProgramForm()
             program_form.college_code.choices = choices
-            return render_template('programs.html', program_form=program_form, edit_form=form, programs=programs_list, colleges=colleges_list, show_edit_modal=True, edit_code=request.form.get('original_code'), pagination=programs_list_data, prev_url=None, next_url=None)
+            return render_template('programs.html', program_form=program_form, edit_form=form, programs=programs_list, colleges=colleges_list, show_edit_modal=True, edit_code=original_code, pagination=programs_list_data, prev_url=None, next_url=None)
 
 
 @programs_bp.route('/programs/delete', methods=['POST'])

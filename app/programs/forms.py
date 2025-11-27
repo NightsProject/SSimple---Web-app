@@ -7,6 +7,10 @@ def validate_program_code_uniqueness(form, field):
     from .models import Programs
     existing = Programs.get_by_code(field.data)
     if existing:
+        # Allow if this is an update and the code hasn't changed
+        original_code = getattr(form, 'original_code', None)
+        if original_code and original_code == field.data:
+            return
         raise ValidationError('Program code already exists.')
 
 class ProgramForm(FlaskForm):

@@ -176,6 +176,11 @@ let colleges = [];
 document.addEventListener('DOMContentLoaded', function() {
     loadColleges();
     loadPrograms();
+
+    // Hide overlay when update confirmation modal is closed without confirming
+    document.getElementById('updateProgramModal').addEventListener('hidden.bs.modal', function() {
+        document.getElementById('editProgramOverlay').classList.add('d-none');
+    });
 });
 
 function loadColleges() {
@@ -412,7 +417,12 @@ function editProgram(code) {
         });
 }
 
-function updateProgram() {
+function showUpdateProgramConfirmation() {
+    document.getElementById('editProgramOverlay').classList.remove('d-none');
+    new bootstrap.Modal(document.getElementById('updateProgramModal')).show();
+}
+
+function confirmUpdateProgram() {
     const originalCode = document.getElementById('editProgramModal').dataset.originalCode;
     const code = document.getElementById('editProgramCode').value.trim();
     const name = document.getElementById('editProgramName').value.trim();
@@ -437,6 +447,7 @@ function updateProgram() {
     .then(data => {
         if (data.success) {
             bootstrap.Modal.getInstance(document.getElementById('editProgramModal')).hide();
+            bootstrap.Modal.getInstance(document.getElementById('updateProgramModal')).hide();
             loadPrograms();
             showNotification('Program updated successfully!', 'success');
         } else {
