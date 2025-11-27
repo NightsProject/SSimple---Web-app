@@ -4,6 +4,8 @@
 {% block title %}Login{% endblock %}
 
 {% block content %}
+<!-- Notification container -->
+<div id="notification-container"></div>
 
 <div class="container">
     <div class="card">
@@ -11,35 +13,23 @@
             <h3>Sign In</h3>
         </div>
         <div class="card-body">
-            <form method="POST" action="{{ url_for('.login') }}">
+            <form id="login-form" method="POST" action="#">
                 {{ form.hidden_tag() }}
                 <div class="form-group">
                     {{ form.username.label }}
-                    {{ form.username(class="form-control") }}
-                    {% if form.username.errors %}
-                        <div class="text-danger">
-                            {% for error in form.username.errors %}
-                                <small>{{ error }}</small>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
+                    {{ form.username(class="form-control", id="username") }}
+                    <div id="username-error" class="text-danger" style="display: none;"></div>
                 </div>
                 <div class="form-group">
                     {{ form.password.label }}
-                    {{ form.password(class="form-control") }}
-                    {% if form.password.errors %}
-                        <div class="text-danger">
-                            {% for error in form.password.errors %}
-                                <small>{{ error }}</small>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
+                    {{ form.password(class="form-control", id="password") }}
+                    <div id="password-error" class="text-danger" style="display: none;"></div>
                 </div>
                 <div class="form-check mb-3">
                     {{ form.remember_me(class="form-check-input") }}
                     {{ form.remember_me.label(class="form-check-label") }}
                 </div>
-                {{ form.submit(class="btn btn-primary w-100") }}
+                <button type="submit" class="btn btn-primary w-100" id="login-btn">Log in</button>
             </form>
             <hr>
             <div class="text-center">
@@ -49,4 +39,81 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+document.getElementById('login-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    const btn = document.getElementById('login-btn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = 'Logging in...';
+    btn.disabled = true;
+
+    fetch('/api/login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('success', data.message);
+            setTimeout(() => {
+                window.location.href = '{{ url_for("dashboard.dashboard") }}';
+            }, 1000);
+        } else {
+            showNotification('danger', data.error);
+            if (data.error.includes('username')) {
+                document.getElementById('username-error').innerHTML = '<small>' + data.error + '</small>';
+                document.getElementById('username-error').style.display = 'block';
+            } else if (data.error.includes('password')) {
+                document.getElementById('password-error').innerHTML = '<small>' + data.error + '</small>';
+                document.getElementById('password-error').style.display = 'block';
+            }
+        }
+    })
+    .catch(error => {
+        showNotification('danger', 'An error occurred. Please try again.');
+        console.error('Error:', error);
+    })
+    .finally(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    });
+});
+
+function showNotification(category, message) {
+    const container = document.getElementById('notification-container');
+    if (!container) {
+        console.error('Notification container not found');
+        return;
+    }
+    const notif = document.createElement('div');
+    notif.className = `notification ${category}`;
+    notif.innerHTML = `
+        <span class="close-btn">&times;</span>
+        <h6>${category.charAt(0).toUpperCase() + category.slice(1)}</h6>
+        <p>${message}</p>
+    `;
+    container.appendChild(notif);
+
+    notif.querySelector('.close-btn').addEventListener('click', () => {
+        notif.style.animation = 'fadeOut 0.3s forwards';
+        setTimeout(() => notif.remove(), 300);
+    });
+
+    setTimeout(() => {
+        notif.style.animation = 'fadeOut 0.3s forwards';
+        setTimeout(() => notif.remove(), 300);
+    }, 3000);
+}
+});
+</script>
 {% endblock %}

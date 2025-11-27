@@ -1,0 +1,135 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}About Us{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header text-center">
+                    <h2>About SSimple</h2>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <img src="https://via.placeholder.com/150" alt="SSimple Logo" class="rounded-circle mb-3" width="150" height="150">
+                        <h4 class="text-primary">Welcome to SSimple</h4>
+                        <p class="lead">A Simple Student Information Management System</p>
+                    </div>
+
+                    <hr>
+
+                    <h5>What is SSimple?</h5>
+                    <p>SSimple is a comprehensive web-based application designed to streamline student information management for educational institutions. Our platform provides an intuitive and efficient way to manage student records, programs, colleges, and user accounts.</p>
+
+                    <h5 class="mt-4">Key Features</h5>
+                    <ul class="list-group list-group-flush mb-4">
+                        <li class="list-group-item">
+                            <strong>Student Management:</strong> Easily add, update, and track student information including personal details, academic records, and enrollment status.
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Program & College Organization:</strong> Organize students by programs and colleges for better academic structure and reporting.
+                        </li>
+                        <li class="list-group-item">
+                            <strong>User Authentication:</strong> Secure login system with role-based access control for administrators and staff.
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Profile Management:</strong> Users can upload profile pictures, update personal information, and change passwords securely.
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Responsive Design:</strong> Access the system from any device with our mobile-friendly interface.
+                        </li>
+                    </ul>
+
+                    <h5 class="mt-4">How to Use SSimple</h5>
+
+                    <div class="accordion" id="usageAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingOne">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                    Getting Started
+                                </button>
+                            </h2>
+                            <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#usageAccordion">
+                                <div class="accordion-body">
+                                    <ol>
+                                        <li><strong>Registration:</strong> New users can register by providing a username, email, and password. Optionally, upload a profile picture during registration.</li>
+                                        <li><strong>Login:</strong> Use your registered credentials to log into the system.</li>
+                                        <li><strong>Dashboard:</strong> After logging in, you'll be directed to the dashboard where you can access all features.</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingTwo">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                    Managing Students
+                                </button>
+                            </h2>
+                            <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#usageAccordion">
+                                <div class="accordion-body">
+                                    <ol>
+                                        <li>Navigate to the <strong>Students</strong> section from the sidebar.</li>
+                                        <li>View all registered students in a paginated table.</li>
+                                        <li>Use the search and filter options to find specific students.</li>
+                                        <li>Click <strong>Add Student</strong> to register new students with their personal and academic information.</li>
+                                        <li>Edit or delete student records as needed.</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingThree">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                    Managing Programs and Colleges
+                                </button>
+                            </h2>
+                            <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#usageAccordion">
+                                <div class="accordion-body">
+                                    <ol>
+                                        <li>Access <strong>Programs</strong> and <strong>Colleges</strong> sections from the sidebar.</li>
+                                        <li>Add new programs with associated colleges.</li>
+                                        <li>Organize academic offerings efficiently.</li>
+                                        <li>Update program details and college information as needed.</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingFour">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                                    Profile and Settings
+                                </button>
+                            </h2>
+                            <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#usageAccordion">
+                                <div class="accordion-body">
+                                    <ol>
+                                        <li>Click on your profile picture in the top-right corner.</li>
+                                        <li>Select <strong>Settings</strong> to update your profile information.</li>
+                                        <li>You can change your username, email, full name, address, birthday, and profile picture.</li>
+                                        <li>To change your password, enter your current password and provide a new one.</li>
+                                        <li>All changes are saved securely and will update your profile immediately.</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="mt-4">
+
+                    <div class="text-center">
+                        <h5>Contact Information</h5>
+                        <p>If you have any questions or need support, please contact our development team.</p>
+                        <p><strong>Email:</strong> nightnightproject@gmail.com</p>
+                        <p><strong>Phone:</strong> +63 9943216343</p>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <small class="text-muted">© 2025 SSimple. All rights reserved. Version 1.0.0</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, SelectField, SubmitField, HiddenField
-from wtforms.validators import DataRequired, Length, Regexp, ValidationError
+from wtforms.validators import DataRequired, Length, Regexp, ValidationError, Optional
 
 
 def validate_program_code(form, field):
@@ -45,4 +46,8 @@ class StudentForm(FlaskForm):
         ('Female', 'Female'),
         ('Other', 'Other')
     ], validators=[DataRequired()])
+    profile_picture = FileField("Profile Picture", validators=[
+        Optional(),
+        FileAllowed(['png', 'jpg', 'jpeg', 'gif'], 'Images only!')
+    ])
     submit = SubmitField("Save Student")

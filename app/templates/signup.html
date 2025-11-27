@@ -4,71 +4,44 @@
 {% block title %}Register{% endblock %}
 
 {% block content %}
+<!-- Notification container -->
+<div id="notification-container"></div>
+
 <div class="container">
     <div class="card">
         <div class="card-header">
             <h3>New User Registration</h3>
         </div>
         <div class="card-body">
-            <form method="POST" action="{{ url_for('.register') }}">
+            <form id="register-form" method="POST" action="#" enctype="multipart/form-data">
                 {{ form.hidden_tag() }}
                 <div class="form-group">
                     {{ form.username.label }}
-                    {{ form.username(class="form-control") }}
-                    {% if form.username.errors %}
-                        <div class="text-danger">
-                            {% for error in form.username.errors %}
-                                <small>{{ error }}</small>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
+                    {{ form.username(class="form-control", id="username") }}
+                    <div id="username-error" class="text-danger" style="display: none;"></div>
                 </div>
                 <div class="form-group">
                     {{ form.email.label }}
-                    {{ form.email(class="form-control") }}
-                    {% if form.email.errors %}
-                        <div class="text-danger">
-                            {% for error in form.email.errors %}
-                                <small>{{ error }}</small>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
+                    {{ form.email(class="form-control", id="email") }}
+                    <div id="email-error" class="text-danger" style="display: none;"></div>
                 </div>
                 <div class="form-group">
                     {{ form.password.label }}
-                    {{ form.password(class="form-control") }}
-                    {% if form.password.errors %}
-                        <div class="text-danger">
-                            {% for error in form.password.errors %}
-                                <small>{{ error }}</small>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
+                    {{ form.password(class="form-control", id="password") }}
+                    <div id="password-error" class="text-danger" style="display: none;"></div>
                 </div>
                 <div class="form-group">
                     {{ form.confirm_password.label }}
-                    {{ form.confirm_password(class="form-control") }}
-                    {% if form.confirm_password.errors %}
-                        <div class="text-danger">
-                            {% for error in form.confirm_password.errors %}
-                                <small>{{ error }}</small>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
+                    {{ form.confirm_password(class="form-control", id="confirm_password") }}
+                    <div id="confirm_password-error" class="text-danger" style="display: none;"></div>
                 </div>
                 <div class="form-group">
                     {{ form.profile_picture.label }}
-                    {{ form.profile_picture(class="form-control") }}
-                    {% if form.profile_picture.errors %}
-                        <div class="text-danger">
-                            {% for error in form.profile_picture.errors %}
-                                <small>{{ error }}</small>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
+                    {{ form.profile_picture(class="form-control", id="profile_picture") }}
+                    <div id="profile_picture-error" class="text-danger" style="display: none;"></div>
                     <small class="form-text text-muted">Optional. Upload a profile picture (JPG, PNG, JPEG only).</small>
                 </div>
-                {{ form.submit(class="btn btn-success w-100") }}
+                <button type="submit" class="btn btn-success w-100" id="register-btn">Submit</button>
             </form>
             <hr>
             <div class="text-center">
@@ -78,4 +51,108 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+document.getElementById('register-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const username = document.getElementById('username').value;
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirm_password').value;
+    const profilePicture = document.getElementById('profile_picture').files[0];
+    const btn = document.getElementById('register-btn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = 'Registering...';
+    btn.disabled = true;
+
+    // Clear previous errors
+    document.querySelectorAll('[id$="-error"]').forEach(el => {
+        el.style.display = 'none';
+        el.innerHTML = '';
+    });
+
+    if (password !== confirmPassword) {
+        showNotification('danger', 'Passwords do not match');
+        document.getElementById('confirm_password-error').innerHTML = '<small>Passwords must match</small>';
+        document.getElementById('confirm_password-error').style.display = 'block';
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('username', username);
+    formData.append('email', email);
+    formData.append('password', password);
+    if (profilePicture) {
+        formData.append('profile_picture', profilePicture);
+    }
+
+    fetch('/api/register', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('success', data.message);
+            setTimeout(() => {
+                window.location.href = '{{ url_for(".login") }}';
+            }, 1000);
+        } else {
+            showNotification('danger', data.error);
+            // Handle specific field errors if needed
+            if (data.error.includes('username')) {
+                document.getElementById('username-error').innerHTML = '<small>' + data.error + '</small>';
+                document.getElementById('username-error').style.display = 'block';
+            } else if (data.error.includes('email')) {
+                document.getElementById('email-error').innerHTML = '<small>' + data.error + '</small>';
+                document.getElementById('email-error').style.display = 'block';
+            } else if (data.error.includes('password')) {
+                document.getElementById('password-error').innerHTML = '<small>' + data.error + '</small>';
+                document.getElementById('password-error').style.display = 'block';
+            }
+        }
+    })
+    .catch(error => {
+        showNotification('danger', 'An error occurred. Please try again.');
+        console.error('Error:', error);
+    })
+    .finally(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    });
+});
+
+function showNotification(category, message) {
+    const container = document.getElementById('notification-container');
+    if (!container) {
+        console.error('Notification container not found');
+        return;
+    }
+    const notif = document.createElement('div');
+    notif.className = `notification ${category}`;
+    notif.innerHTML = `
+        <span class="close-btn">&times;</span>
+        <h6>${category.charAt(0).toUpperCase() + category.slice(1)}</h6>
+        <p>${message}</p>
+    `;
+    container.appendChild(notif);
+
+    notif.querySelector('.close-btn').addEventListener('click', () => {
+        notif.style.animation = 'fadeOut 0.3s forwards';
+        setTimeout(() => notif.remove(), 300);
+    });
+
+    setTimeout(() => {
+        notif.style.animation = 'fadeOut 0.3s forwards';
+        setTimeout(() => notif.remove(), 300);
+    }, 3000);
+}
+});
+</script>
 {% endblock %}

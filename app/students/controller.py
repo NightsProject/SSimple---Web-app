@@ -3,7 +3,11 @@ from flask import render_template, request, jsonify, session, redirect, url_for,
 from .forms import StudentForm
 from .models import Students
 from ..programs.models import Programs
+from config import SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_BUCKET_NAME
+from supabase import create_client, Client
 
+
+supabase = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
 
 @students_bp.route('/students')
 def students_list():
@@ -254,3 +258,315 @@ def delete_student():
         flash(f'Error deleting student: {e}', 'danger')
 
     return redirect(url_for('students.students_list'))
+
+
+# API Endpoints
+@students_bp.route('/api/students', methods=['GET'])
+def api_list_students():
+    """API endpoint to list students with pagination, search, and sort."""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    try:
+        # Get search, sort, and pagination parameters
+        search = request.args.get('q', '')
+        sort_by = request.args.get('sort', 'id')
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 10))
+
+        # Get paginated students data
+        students_data = Students.get_all(search=search, sort_by=sort_by, page=page, per_page=per_page)
+
+        return jsonify({
+            'success': True,
+            'data': students_data
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@students_bp.route('/api/students/<id_number>', methods=['GET'])
+def api_get_student(id_number):
+    """API endpoint to get a single student by ID."""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    try:
+        student = Students.get_by_id(id_number)
+        if not student:
+            return jsonify({'success': False, 'error': 'Student not found'}), 404
+
+        return jsonify({
+            'success': True,
+            'data': student
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@students_bp.route('/api/students', methods=['POST'])
+def api_create_student():
+    """API endpoint to create a new student."""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    try:
+        # Handle both JSON and form data
+        if request.content_type.startswith('multipart/form-data'):
+            # Form data with file upload
+            id_number = request.form.get('id_number', '').strip()
+            first_name = request.form.get('first_name', '').strip()
+            last_name = request.form.get('last_name', '').strip()
+            program_code = request.form.get('program_code', '').strip()
+            year = request.form.get('year')
+            gender = request.form.get('gender', '').strip()
+            profile_picture = request.files.get('profile_picture')
+        else:
+            # JSON data
+            data = request.get_json()
+            required_fields = ['id_number', 'first_name', 'last_name', 'program_code', 'year', 'gender']
+            if not data or not all(field in data for field in required_fields):
+                return jsonify({'success': False, 'error': f'Missing required fields: {", ".join(required_fields)}'}), 400
+
+            id_number = data['id_number'].strip()
+            first_name = data['first_name'].strip()
+            last_name = data['last_name'].strip()
+            program_code = data['program_code'].strip()
+            year = data['year']
+            gender = data['gender'].strip()
+            profile_picture = None
+
+        if not all([id_number, first_name, last_name, program_code, gender]) or year is None:
+            return jsonify({'success': False, 'error': 'All fields must be non-empty'}), 400
+
+        # Validate gender
+        if gender not in ['Male', 'Female', 'Other']:
+            return jsonify({'success': False, 'error': 'Gender must be Male, Female, or Other'}), 400
+
+        # Check if program exists
+        program = Programs.get_by_code(program_code)
+        if not program:
+            return jsonify({'success': False, 'error': 'Program not found'}), 404
+
+        # Check if student already exists
+        existing = Students.get_by_id(id_number)
+        if existing:
+            return jsonify({'success': False, 'error': 'Student with this ID already exists'}), 409
+
+        # Validate year
+        if year not in ['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year']:
+            return jsonify({'success': False, 'error': 'Year must be one of: 1st Year, 2nd Year, 3rd Year, 4th Year, 5th Year'}), 400
+
+        # Handle profile picture upload
+        file_link = None
+        if profile_picture and profile_picture.filename:
+            # Validate file type
+            allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
+            if '.' not in profile_picture.filename or profile_picture.filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
+                return jsonify({'success': False, 'error': 'Invalid file type. Only PNG, JPG, JPEG, GIF allowed.'}), 400
+
+            # Upload to Supabase - rename file to student ID
+            file_extension = profile_picture.filename.rsplit('.', 1)[1].lower()
+            filename = f"{id_number}.{file_extension}"
+            file_path = f"students/{filename}"
+
+            try:
+                file_bytes = profile_picture.read()
+                content_type = profile_picture.mimetype
+                upload_response = supabase.storage.from_(SUPABASE_BUCKET_NAME).upload(
+                    path=file_path,
+                    file=file_bytes,
+                    file_options={"content-type": content_type}
+                )
+
+
+                print(upload_response)
+                # Get public URL
+                file_link = supabase.storage.from_(SUPABASE_BUCKET_NAME).get_public_url(file_path)
+            except Exception as upload_error:
+                return jsonify({'success': False, 'error': f'File upload failed: {str(upload_error)}'}), 500
+
+        # Create new student
+        student = Students(
+            id_number=id_number,
+            first_name=first_name,
+            last_name=last_name,
+            program_code=program_code,
+            year=year,
+            gender=gender,
+            file_link=file_link
+        )
+        student.add()
+
+        return jsonify({
+            'success': True,
+            'message': f'Student {first_name} {last_name} created successfully',
+            'data': {
+                'id_number': id_number,
+                'first_name': first_name,
+                'last_name': last_name,
+                'program_code': program_code,
+                'year': year,
+                'gender': gender,
+                'file_link': file_link
+            }
+        }), 201
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@students_bp.route('/api/students/<id_number>', methods=['PUT'])
+def api_update_student(id_number):
+    """API endpoint to update a student."""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    try:
+        # Handle both JSON and form data
+        if request.content_type.startswith('multipart/form-data'):
+            # Form data with file upload
+            first_name = request.form.get('first_name', '').strip()
+            last_name = request.form.get('last_name', '').strip()
+            program_code = request.form.get('program_code', '').strip()
+            year = request.form.get('year')
+            gender = request.form.get('gender', '').strip()
+            new_id = request.form.get('id_number', id_number).strip()
+            profile_picture = request.files.get('profile_picture')
+        else:
+            # JSON data
+            data = request.get_json()
+            required_fields = ['first_name', 'last_name', 'program_code', 'year', 'gender']
+            if not data or not all(field in data for field in required_fields):
+                return jsonify({'success': False, 'error': f'Missing required fields: {", ".join(required_fields)}'}), 400
+
+            first_name = data['first_name'].strip()
+            last_name = data['last_name'].strip()
+            program_code = data['program_code'].strip()
+            year = data['year']
+            gender = data['gender'].strip()
+            new_id = data.get('id_number', id_number).strip()
+            profile_picture = None
+
+        if not all([first_name, last_name, program_code, gender]) or year is None:
+            return jsonify({'success': False, 'error': 'All fields must be non-empty'}), 400
+
+        # Validate gender
+        if gender not in ['Male', 'Female', 'Other']:
+            return jsonify({'success': False, 'error': 'Gender must be Male, Female, or Other'}), 400
+
+        # Check if program exists
+        program = Programs.get_by_code(program_code)
+        if not program:
+            return jsonify({'success': False, 'error': 'Program not found'}), 404
+
+        # Check if target ID already exists (if changing ID)
+        if new_id != id_number:
+            existing = Students.get_by_id(new_id)
+            if existing:
+                return jsonify({'success': False, 'error': 'Student with new ID already exists'}), 409
+
+        # Validate year
+        if year not in ['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year']:
+            return jsonify({'success': False, 'error': 'Year must be one of: 1st Year, 2nd Year, 3rd Year, 4th Year, 5th Year'}), 400
+
+        print(profile_picture)
+        # Handle profile picture upload
+        file_link = None
+        if profile_picture and profile_picture.filename:
+            # Validate file type
+            allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
+            if '.' not in profile_picture.filename or profile_picture.filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
+                return jsonify({'success': False, 'error': 'Invalid file type. Only PNG, JPG, JPEG, GIF allowed.'}), 400
+
+            # Upload to Supabase - rename file to student ID
+            file_extension = profile_picture.filename.rsplit('.', 1)[1].lower()
+            filename = f"{new_id}.{file_extension}"
+            file_path = f"students/{filename}"
+
+            try:
+                # Delete old file if exists
+                try:
+                    supabase.storage.from_(SUPABASE_BUCKET_NAME).remove([f"students/{id_number}.{file_extension}"])
+                except:
+                    pass  # Old file might not exist or different extension
+
+                file_bytes = profile_picture.read()
+                content_type = profile_picture.mimetype
+                upload_response = supabase.storage.from_(SUPABASE_BUCKET_NAME).upload(
+                    path=file_path,
+                    file=file_bytes,
+                    file_options={"content-type": content_type}
+                )
+
+
+                print(upload_response)
+                # Get public URL
+                file_link = supabase.storage.from_(SUPABASE_BUCKET_NAME).get_public_url(file_path)
+            except Exception as upload_error:
+                return jsonify({'success': False, 'error': f'File upload failed: {str(upload_error)}'}), 500
+
+        # Update student
+        updated = Students.update(
+            original_id=id_number,
+            new_id=new_id,
+            first_name=first_name,
+            last_name=last_name,
+            program_code=program_code,
+            year=year,
+            gender=gender,
+            file_link=file_link
+        )
+        if updated == 0:
+            return jsonify({'success': False, 'error': 'Student not found'}), 404
+
+        return jsonify({
+            'success': True,
+            'message': 'Student updated successfully',
+            'data': {
+                'id_number': new_id,
+                'first_name': first_name,
+                'last_name': last_name,
+                'program_code': program_code,
+                'year': year,
+                'gender': gender,
+                'file_link': file_link
+            }
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@students_bp.route('/api/students/<id_number>', methods=['DELETE'])
+def api_delete_student(id_number):
+    """API endpoint to delete a student."""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    try:
+        # Delete student
+        deleted = Students.delete(id_number)
+        if deleted == 0:
+            return jsonify({'success': False, 'error': 'Student not found'}), 404
+
+        return jsonify({
+            'success': True,
+            'message': 'Student deleted successfully'
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@students_bp.route('/api/students/next-id/<year>', methods=['GET'])
+def api_next_id_for_year(year):
+    """API endpoint to get next student ID for the requested year."""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    try:
+        next_id = Students.get_next_id(year=year)
+        return jsonify({
+            'success': True,
+            'data': {'next_id': next_id}
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500

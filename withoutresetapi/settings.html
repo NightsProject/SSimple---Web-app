@@ -1,0 +1,132 @@
+{% extends "layouts/base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3>User Settings</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        {{ form.hidden_tag() }}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    {{ form.username.label }}
+                                    {{ form.username(class="form-control") }}
+                                    {% if form.username.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.username.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    {{ form.email.label }}
+                                    {{ form.email(class="form-control") }}
+                                    {% if form.email.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.email.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group mb-3">
+                            {{ form.fullname.label }}
+                            {{ form.fullname(class="form-control") }}
+                            {% if form.fullname.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.fullname.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group mb-3">
+                            {{ form.address.label }}
+                            {{ form.address(class="form-control", rows=3) }}
+                            {% if form.address.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.address.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group mb-3">
+                            {{ form.birthday.label }}
+                            {{ form.birthday(class="form-control") }}
+                            {% if form.birthday.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.birthday.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group mb-3">
+                            {{ form.profile_picture.label }}
+                            {{ form.profile_picture(class="form-control") }}
+                            {% if form.profile_picture.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.profile_picture.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">Optional. Upload a new profile picture (JPG, PNG, JPEG only).</small>
+                        </div>
+                        <hr>
+                        <h5 class="mb-3">Change Password</h5>
+                        <div class="form-group mb-3">
+                            {{ form.current_password.label }}
+                            {{ form.current_password(class="form-control") }}
+                            {% if form.current_password.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.current_password.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group mb-3">
+                            {{ form.new_password.label }}
+                            {{ form.new_password(class="form-control") }}
+                            {% if form.new_password.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.new_password.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="form-group mb-3">
+                            {{ form.confirm_new_password.label }}
+                            {{ form.confirm_new_password(class="form-control") }}
+                            {% if form.confirm_new_password.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.confirm_new_password.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        {{ form.submit(class="btn btn-success") }}
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,5 +1,5 @@
 from flask import Flask, g
-from config import DB_USERNAME, DB_PASSWORD, DB_NAME, DB_HOST, DB_PORT, SECRET_KEY, BOOTSTRAP_SERVE_LOCAL
+from config import DB_USERNAME, DB_PASSWORD, DB_NAME, DB_HOST, DB_PORT, SECRET_KEY, BOOTSTRAP_SERVE_LOCAL, SUPABASE_URL, SUPABASE_ANON_KEY
 from flask_wtf.csrf import CSRFProtect
 from psycopg2 import pool
 from flask_bootstrap import Bootstrap
@@ -11,7 +11,9 @@ def create_app(test_config=None):
     
     app.config['SECRET_KEY'] = SECRET_KEY 
     
-    CSRFProtect(app)
+    global csrf
+    csrf = CSRFProtect(app)
+
     Bootstrap(app)
     
     create_database.initialize_db()
@@ -27,7 +29,6 @@ def create_app(test_config=None):
             port=DB_PORT,
             database=DB_NAME
         )
-
     # Open connection for this request
     @app.before_request
     def get_db_connection():

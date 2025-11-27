@@ -202,3 +202,51 @@ class Users:
             return False
         finally:
             db_pool.putconn(conn)
+
+    @classmethod
+    def get_by_username(cls, username):
+        """Get user by username."""
+        conn = db_pool.getconn()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT id, username, email, profile_picture FROM users WHERE username = %s",
+                    (username,)
+                )
+                result = cursor.fetchone()
+                if result:
+                    return {
+                        'id': result[0],
+                        'username': result[1],
+                        'email': result[2],
+                        'profile_picture': result[3]
+                    }
+        except Exception as e:
+            print(f"Error getting user by username: {e}")
+        finally:
+            db_pool.putconn(conn)
+        return None
+
+    @classmethod
+    def get_by_email(cls, email):
+        """Get user by email."""
+        conn = db_pool.getconn()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT id, username, email, profile_picture FROM users WHERE email = %s",
+                    (email,)
+                )
+                result = cursor.fetchone()
+                if result:
+                    return {
+                        'id': result[0],
+                        'username': result[1],
+                        'email': result[2],
+                        'profile_picture': result[3]
+                    }
+        except Exception as e:
+            print(f"Error getting user by email: {e}")
+        finally:
+            db_pool.putconn(conn)
+        return None

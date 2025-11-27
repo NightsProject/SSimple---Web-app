@@ -11,6 +11,7 @@ flask-wtf = "*"
 wtforms = "*"
 flask-bootstrap = "*"
 email-validator = "*"
+supabase = "*"
 
 [dev-packages]
 pytest = "*"

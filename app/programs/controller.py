@@ -1,5 +1,5 @@
 from . import programs_bp
-from flask import render_template, session, redirect, url_for, request, flash
+from flask import render_template, session, redirect, url_for, request, flash, jsonify
 from .models import Programs
 from .forms import ProgramForm
 from app.colleges.models import Colleges
@@ -160,3 +160,154 @@ def delete():
         flash(f'Error deleting program: {e}', 'danger')
 
     return redirect(url_for('programs.list'))
+
+
+# API Endpoints
+@programs_bp.route('/api/programs', methods=['GET'])
+def api_list_programs():
+    """API endpoint to list programs with pagination, search, and sort."""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    try:
+        # Get search, sort, and pagination parameters
+        search = request.args.get('q', '')
+        sort_by = request.args.get('sort', 'code')
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 10))
+
+        # Get paginated programs data
+        programs_data = Programs.get_all(search=search, sort_by=sort_by, page=page, per_page=per_page)
+
+        return jsonify({
+            'success': True,
+            'data': programs_data
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@programs_bp.route('/api/programs/<code>', methods=['GET'])
+def api_get_program(code):
+    """API endpoint to get a single program by code."""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    try:
+        program = Programs.get_by_code(code)
+        if not program:
+            return jsonify({'success': False, 'error': 'Program not found'}), 404
+
+        return jsonify({
+            'success': True,
+            'data': program
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@programs_bp.route('/api/programs', methods=['POST'])
+def api_create_program():
+    """API endpoint to create a new program."""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    try:
+        data = request.get_json()
+        if not data or 'code' not in data or 'name' not in data or 'college_code' not in data:
+            return jsonify({'success': False, 'error': 'Missing required fields: code, name, and college_code'}), 400
+
+        code = data['code'].strip()
+        name = data['name'].strip()
+        college_code = data['college_code'].strip()
+
+        if not code or not name or not college_code:
+            return jsonify({'success': False, 'error': 'Code, name, and college_code cannot be empty'}), 400
+
+        # Check if college exists
+        college = Colleges.get_by_code(college_code)
+        if not college:
+            return jsonify({'success': False, 'error': 'College not found'}), 404
+
+        # Check if program already exists
+        existing = Programs.get_by_code(code)
+        if existing:
+            return jsonify({'success': False, 'error': 'Program with this code already exists'}), 409
+
+        # Create new program
+        Programs(program_code=code, program_name=name, college_code=college_code).add()
+
+        return jsonify({
+            'success': True,
+            'message': f'Program {name} created successfully',
+            'data': {'code': code, 'name': name, 'college_code': college_code}
+        }), 201
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@programs_bp.route('/api/programs/<code>', methods=['PUT'])
+def api_update_program(code):
+    """API endpoint to update a program."""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    try:
+        data = request.get_json()
+        if not data or 'name' not in data or 'college_code' not in data:
+            return jsonify({'success': False, 'error': 'Missing required fields: name and college_code'}), 400
+
+        new_name = data['name'].strip()
+        new_code = data.get('code', code).strip()
+        college_code = data['college_code'].strip()
+
+        if not new_name or not college_code:
+            return jsonify({'success': False, 'error': 'Name and college_code cannot be empty'}), 400
+
+        # Check if college exists
+        college = Colleges.get_by_code(college_code)
+        if not college:
+            return jsonify({'success': False, 'error': 'College not found'}), 404
+
+        # Check if target code already exists (if changing code)
+        if new_code != code:
+            existing = Programs.get_by_code(new_code)
+            if existing:
+                return jsonify({'success': False, 'error': 'Program with new code already exists'}), 409
+
+        # Update program
+        updated = Programs.update_program(code, new_code, new_name, college_code)
+        if updated == 0:
+            return jsonify({'success': False, 'error': 'Program not found'}), 404
+
+        return jsonify({
+            'success': True,
+            'message': 'Program updated successfully',
+            'data': {'code': new_code, 'name': new_name, 'college_code': college_code}
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@programs_bp.route('/api/programs/<code>', methods=['DELETE'])
+def api_delete_program(code):
+    """API endpoint to delete a program."""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    try:
+        # Check if program has students
+        if Programs.has_students(code):
+            return jsonify({'success': False, 'error': 'Cannot delete program with assigned students'}), 409
+
+        # Delete program
+        deleted = Programs.delete(code)
+        if deleted == 0:
+            return jsonify({'success': False, 'error': 'Program not found'}), 404
+
+        return jsonify({
+            'success': True,
+            'message': 'Program deleted successfully'
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500

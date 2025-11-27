@@ -4,161 +4,63 @@
 <div class="container mt-4">
   <div class="card">
     <div class="card-body">
+
   <div class="d-flex justify-content-between align-items-center mb-3">
+
+    <!-- Left side: New Program button + Search -->
     <div class="d-flex align-items-center">
-      <button class="btn btn-success me-3" data-bs-toggle="modal" data-bs-target="#addProgramModal" {% if not colleges %}disabled title="Add a college first"{% endif %}>
+      <!-- New Program Button (opens modal) -->
+      <button class="btn btn-success me-3" data-bs-toggle="modal" data-bs-target="#addProgramModal" id="addProgramBtn">
         Add Program
       </button>
-      <form class="d-flex" role="search" method="get">
-        <input class="form-control me-2" type="search" placeholder="Search Programs..." name="q" value="{{ request.args.get('q', '') }}">
-        <button class="btn btn-outline-primary" type="submit">Search</button>
-      </form>
+
+      <!-- Search -->
+      <div class="d-flex" role="search">
+        <input class="form-control me-2"
+              type="search"
+              placeholder="Search Programs..."
+              id="searchInput"
+              value="">
+        <button class="btn btn-outline-primary" type="button" onclick="searchPrograms()">Search</button>
+      </div>
     </div>
-    <form method="get">
-      <select class="form-select" name="sort" onchange="this.form.submit()">
-        <option value="code" {% if request.args.get('sort') == 'code' %}selected{% endif %}>Sort by Code</option>
-        <option value="name" {% if request.args.get('sort') == 'name' %}selected{% endif %}>Sort by Name</option>
-      </select>
-    </form>
+
+    <!-- Sort -->
+    <select class="form-select" id="sortSelect" onchange="sortPrograms()">
+      <option value="code">Sort by Code</option>
+      <option value="name">Sort by Name</option>
+    </select>
   </div>
 
+  <!-- Table -->
   <div class="table-responsive">
     <table class="table table-striped table-hover">
       <thead>
         <tr>
-          <th>#</th>
-          <th>Code</th>
-          <th>Name</th>
-          <th>College</th>
-          <th>Actions</th>
+          <th scope="col">#</th>
+          <th scope="col">Code</th>
+          <th scope="col">Name</th>
+          <th scope="col">College</th>
+          <th scope="col">Actions</th>
         </tr>
       </thead>
-      <tbody>
-        {% for program in programs %}
-        <tr>
-          <td>{{ (pagination.page - 1) * pagination.per_page + loop.index }}</td>
-          <td>{{ program.code }}</td>
-          <td>{{ program.name }}</td>
-          <td>{{ program.college_name or program.college_code or '-' }}</td>
-          <td>
-            <div class="btn-group">
-                <a href="{{ url_for('programs.update', code=program.code) }}" class="btn btn-sm btn-warning"><i class="bi bi-pencil"></i></a>
-                <button type="button" class="btn btn-sm btn-danger" onclick="deleteProgram('{{ program.code }}')">
-                    <i class="bi bi-trash"></i>
-                </button>
-            </div>
-          </td>
-        </tr>
-        {% else %}
-        <tr>
-          <td colspan="5" class="text-center text-muted">No programs found.</td>
-        </tr>
-        {% endfor %}
+      <tbody id="programs-tbody">
+        <!-- Programs will be loaded here via JS -->
       </tbody>
     </table>
   </div>
-</div>
 
   <!-- Pagination Controls -->
   <nav aria-label="Page navigation" class="mt-4">
-    <ul class="pagination justify-content-center">
-
-      <!-- Previous Button -->
-      {% if prev_url %}
-        <li class="page-item">
-          <a class="page-link" href="{{ prev_url }}" aria-label="Previous">
-            <span aria-hidden="true">&laquo;</span> Previous
-          </a>
-        </li>
-      {% else %}
-        <li class="page-item disabled">
-          <span class="page-link"><span aria-hidden="true">&laquo;</span> Previous</span>
-        </li>
-      {% endif %}
-
-      <!-- Page Numbers -->
-      {% set current_page = pagination['page'] %}
-      {% set total_pages = pagination['pages'] %}
-      {% set per_page = pagination['per_page'] %}
-
-      <!-- Always show 1 -->
-      {% if 1 != current_page %}
-        <li class="page-item">
-          <a class="page-link"
-             href="{{ url_for('programs.list', page=1, q=request.args.get('q', ''), sort=request.args.get('sort', 'code')) }}">
-             1
-          </a>
-        </li>
-      {% else %}
-        <li class="page-item active" aria-current="page">
-          <span class="page-link editable-page">{{ current_page }}</span>
-        </li>
-      {% endif %}
-
-      <!-- Show 2 if not current -->
-      {% if total_pages >= 2 and 2 != current_page %}
-        <li class="page-item">
-          <a class="page-link"
-             href="{{ url_for('programs.list', page=2, q=request.args.get('q', ''), sort=request.args.get('sort', 'code')) }}">
-             2
-          </a>
-        </li>
-      {% elif 2 == current_page %}
-        <li class="page-item active" aria-current="page">
-          <span class="page-link editable-page">{{ current_page }}</span>
-        </li>
-      {% endif %}
-
-      <!-- Show 3 if not current -->
-      {% if total_pages >= 3 and 3 != current_page %}
-        <li class="page-item">
-          <a class="page-link"
-             href="{{ url_for('programs.list', page=3, q=request.args.get('q', ''), sort=request.args.get('sort', 'code')) }}">
-             3
-          </a>
-        </li>
-      {% elif 3 == current_page %}
-        <li class="page-item active" aria-current="page">
-          <span class="page-link editable-page">{{ current_page }}</span>
-        </li>
-      {% endif %}
-
-      <!-- Show last page if not already shown -->
-      {% if total_pages > 3 %}
-        {% if total_pages != current_page %}
-          <li class="page-item">
-            <a class="page-link"
-               href="{{ url_for('programs.list', page=total_pages, q=request.args.get('q', ''), sort=request.args.get('sort', 'code')) }}">
-               {{ total_pages }}
-            </a>
-          </li>
-        {% else %}
-          <li class="page-item active" aria-current="page">
-            <span class="page-link editable-page">{{ current_page }}</span>
-          </li>
-        {% endif %}
-      {% endif %}
-
-      <!-- Next Button -->
-      {% if next_url %}
-        <li class="page-item">
-          <a class="page-link" href="{{ next_url }}" aria-label="Next">
-            Next <span aria-hidden="true">&raquo;</span>
-          </a>
-        </li>
-      {% else %}
-        <li class="page-item disabled">
-          <span class="page-link">Next <span aria-hidden="true">&raquo;</span></span>
-        </li>
-      {% endif %}
-
+    <ul class="pagination justify-content-center" id="pagination-controls">
+      <!-- Pagination will be generated here via JS -->
     </ul>
   </nav>
     </div>
   </div>
 </div>
 
-<!-- Add Program Modal -->
+<!-- 🟢 Modal: Add Program -->
 <div class="modal fade" id="addProgramModal" tabindex="-1" aria-labelledby="addProgramModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content border-0 shadow-lg">
@@ -167,81 +69,82 @@
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
 
-      <form action="{{ url_for('programs.add') }}" method="post">
-        {{ program_form.hidden_tag() }}
-        <div class="modal-body">
-          <div class="mb-3">
-            {{ program_form.code.label(class="form-label") }}
-            {{ program_form.code(class="form-control") }}
-          </div>
-          <div class="mb-3">
-            {{ program_form.name.label(class="form-label") }}
-            {{ program_form.name(class="form-control") }}
-          </div>
-          <div class="mb-3">
-            {{ program_form.college_code.label(class="form-label") }}
-            {{ program_form.college_code(class="form-control", placeholder="Optional: College code") }}
-            <small class="text-muted">Available colleges: {% for c in colleges %}{{ c.code }}{% if not loop.last %}, {% endif %}{% endfor %}</small>
-          </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="addProgramCode" class="form-label">Code</label>
+          <input type="text" class="form-control" id="addProgramCode" placeholder="e.g., BSCS">
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-          {{ program_form.submit(class="btn btn-success") }}
+        <div class="mb-3">
+          <label for="addProgramName" class="form-label">Name</label>
+          <input type="text" class="form-control" id="addProgramName" placeholder="e.g., Bachelor of Science in Computer Science">
         </div>
-      </form>
+        <div class="mb-3">
+          <label for="addProgramCollege" class="form-label">College</label>
+          <select class="form-control" id="addProgramCollege">
+            <!-- Colleges will be loaded here -->
+          </select>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-success" onclick="addProgram()">Add Program</button>
+      </div>
     </div>
   </div>
 </div>
 
-{# Edit modal #}
-{% if edit_form is defined %}
+<!-- Edit Program Modal -->
 <div class="modal fade" id="editProgramModal" tabindex="-1">
     <div class="modal-dialog">
-        <div class="modal-content">
+        <div class="modal-content position-relative">
+            <div id="editProgramOverlay" class="position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-none" style="z-index: 10;"></div>
             <div class="modal-header">
                 <h5 class="modal-title">Edit Program</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form method="POST" action="{{ url_for('programs.update') }}">
-                <div class="modal-body">
-                    {{ edit_form.hidden_tag() }}
-                    <input type="hidden" name="original_code" value="{{ edit_code }}">
-
-                    <div class="mb-3">
-                        {{ edit_form.code.label(class="form-label") }}
-                        {{ edit_form.code(class="form-control") }}
-                    </div>
-                    <div class="mb-3">
-                        {{ edit_form.name.label(class="form-label") }}
-                        {{ edit_form.name(class="form-control") }}
-                    </div>
-                    <div class="mb-3">
-                        {{ edit_form.college_code.label(class="form-label") }}
-                        {{ edit_form.college_code(class="form-control") }}
-                        <small class="text-muted">Available colleges: {% for c in colleges %}{{ c.code }}{% if not loop.last %}, {% endif %}{% endfor %}</small>
-                    </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="editProgramCode" class="form-label">Code</label>
+                    <input type="text" class="form-control" id="editProgramCode">
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    {{ edit_form.submit(class="btn btn-primary") }}
+                <div class="mb-3">
+                    <label for="editProgramName" class="form-label">Name</label>
+                    <input type="text" class="form-control" id="editProgramName">
                 </div>
-            </form>
+                <div class="mb-3">
+                    <label for="editProgramCollege" class="form-label">College</label>
+                    <select class="form-control" id="editProgramCollege">
+                        <!-- Colleges will be loaded here -->
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="showUpdateProgramConfirmation()">Update</button>
+            </div>
         </div>
     </div>
 </div>
-{% endif %}
 
-{% if show_edit_modal %}
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      var editModalEl = document.getElementById('editProgramModal');
-      if (editModalEl) {
-        var modal = new bootstrap.Modal(editModalEl);
-        modal.show();
-      }
-    });
-  </script>
-{% endif %}
+<!-- Update Confirmation Modal -->
+<div class="modal fade" id="updateProgramModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Update</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to update this program?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="confirmUpdateProgram()">Update</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Delete Confirmation Modal -->
 <div class="modal fade" id="deleteProgramModal" tabindex="-1">
@@ -256,11 +159,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form id="deleteProgramForm" method="POST" class="d-inline">
-                    <input type="hidden" name="code" id="delete_program_code" value="">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="btn btn-danger">Delete</button>
-                </form>
+                <button type="button" class="btn btn-danger" onclick="confirmDeleteProgram()">Delete</button>
             </div>
         </div>
     </div>
@@ -268,64 +167,341 @@
 
 <!-- JavaScript -->
 <script>
-function deleteProgram(code) {
-    // Set up the delete form and show confirmation modal
-    document.getElementById('deleteProgramForm').action = `/programs/delete`;
-    var codeField = document.getElementById('delete_program_code');
-    if (codeField) codeField.value = code;
-    var deleteModal = new bootstrap.Modal(document.getElementById('deleteProgramModal'));
-    deleteModal.show();
+let currentPage = 1;
+let currentSearch = '';
+let currentSort = 'code';
+let totalPages = 1;
+let colleges = [];
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadColleges();
+    loadPrograms();
+});
+
+function loadColleges() {
+    fetch('/api/colleges?page=1&per_page=1000')  // Load all colleges for select
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                colleges = data.data.items;
+                populateCollegeSelects();
+                if (colleges.length === 0) {
+                    document.getElementById('addProgramBtn').disabled = true;
+                    document.getElementById('addProgramBtn').title = 'Add a college first';
+                }
+            } else {
+                console.error('Error loading colleges:', data.error);
+            }
+        })
+        .catch(error => console.error('Error:', error));
 }
 
-// Pagination editable page functionality
-document.addEventListener('DOMContentLoaded', function() {
-    const attachDoubleClickHandler = (span) => {
-        span.addEventListener('dblclick', function() {
-            const currentPage = parseInt(this.textContent);
-            const input = document.createElement('input');
-            input.type = 'number';
-            input.value = currentPage;
-            input.min = 1;
-            input.max = {{ total_pages }};
-            input.className = 'form-control form-control-sm d-inline-block';
-            input.style.width = '60px';
-            input.style.border = 'none';
-            input.style.background = 'transparent';
-            input.style.color = '#456882';
+function populateCollegeSelects() {
+    const addSelect = document.getElementById('addProgramCollege');
+    const editSelect = document.getElementById('editProgramCollege');
+    addSelect.innerHTML = '';
+    editSelect.innerHTML = '';
+    colleges.forEach(college => {
+        const option1 = document.createElement('option');
+        option1.value = college.code;
+        option1.textContent = `${college.code} - ${college.name}`;
+        addSelect.appendChild(option1);
 
-            const li = this.parentElement;
-            li.innerHTML = '';
-            li.appendChild(input);
-            input.focus();
-            input.select();
+        const option2 = document.createElement('option');
+        option2.value = college.code;
+        option2.textContent = `${college.code} - ${college.name}`;
+        editSelect.appendChild(option2);
+    });
+}
 
-            const navigate = () => {
-                const newPage = parseInt(input.value);
-                if (newPage >= 1 && newPage <= {{ total_pages }} && newPage !== currentPage) {
-                    const url = new URL(window.location);
-                    url.searchParams.set('page', newPage);
-                    window.location.href = url.toString();
-                } else {
-                    li.innerHTML = '<span class="page-link editable-page">' + currentPage + '</span>';
-                    attachDoubleClickHandler(li.querySelector('.editable-page'));
-                }
-            };
+function loadPrograms() {
+    fetch(`/api/programs?page=${currentPage}&q=${currentSearch}&sort=${currentSort}&per_page=10`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                renderPrograms(data.data.items);
+                renderPagination(data.data);
+                totalPages = data.data.pages;
+            } else {
+                console.error('Error loading programs:', data.error);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+}
 
-            input.addEventListener('blur', navigate);
-            input.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    navigate();
-                } else if (e.key === 'Escape') {
-                    li.innerHTML = '<span class="page-link editable-page">' + currentPage + '</span>';
-                    attachDoubleClickHandler(li.querySelector('.editable-page'));
-                }
-            });
+function renderPrograms(programs) {
+    const tbody = document.getElementById('programs-tbody');
+    tbody.innerHTML = '';
+
+    if (programs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No programs found.</td></tr>';
+        return;
+    }
+
+    programs.forEach((program, index) => {
+        const row = `
+            <tr>
+                <th scope="row">${(currentPage - 1) * 10 + index + 1}</th>
+                <td>${program.code}</td>
+                <td>${program.name}</td>
+                <td>${program.college_name || program.college_code || '-'}</td>
+                <td>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-warning" onclick="editProgram('${program.code}')"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteProgram('${program.code}')"><i class="bi bi-trash"></i></button>
+                    </div>
+                </td>
+            </tr>
+        `;
+        tbody.innerHTML += row;
+    });
+}
+
+function renderPagination(data) {
+    const paginationControls = document.getElementById('pagination-controls');
+    paginationControls.innerHTML = '';
+
+    // Previous button
+    const prevLi = document.createElement('li');
+    prevLi.className = `page-item ${currentPage > 1 ? '' : 'disabled'}`;
+    prevLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage - 1})" aria-label="Previous"><span aria-hidden="true">&laquo;</span> Previous</a>`;
+    paginationControls.appendChild(prevLi);
+
+    // Page numbers
+    for (let i = 1; i <= data.pages; i++) {
+        if (i === 1 || i === data.pages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+            const pageLi = document.createElement('li');
+            pageLi.className = `page-item ${i === currentPage ? 'active' : ''}`;
+            if (i === currentPage) {
+                pageLi.innerHTML = `<span class="page-link editable-page">${i}</span>`;
+                attachEditablePageHandler(pageLi.querySelector('.editable-page'));
+            } else {
+                pageLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${i})">${i}</a>`;
+            }
+            paginationControls.appendChild(pageLi);
+        } else if (i === currentPage - 2 || i === currentPage + 2) {
+            const ellipsisLi = document.createElement('li');
+            ellipsisLi.className = 'page-item disabled';
+            ellipsisLi.innerHTML = '<span class="page-link">...</span>';
+            paginationControls.appendChild(ellipsisLi);
+        }
+    }
+
+    // Next button
+    const nextLi = document.createElement('li');
+    nextLi.className = `page-item ${currentPage < data.pages ? '' : 'disabled'}`;
+    nextLi.innerHTML = `<a class="page-link" href="#" onclick="changePage(${currentPage + 1})" aria-label="Next">Next <span aria-hidden="true">&raquo;</span></a>`;
+    paginationControls.appendChild(nextLi);
+}
+
+function attachEditablePageHandler(span) {
+    span.addEventListener('dblclick', function() {
+        const currentPageNum = parseInt(this.textContent);
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.value = currentPageNum;
+        input.min = 1;
+        input.max = totalPages;
+        input.className = 'form-control form-control-sm d-inline-block';
+        input.style.width = '60px';
+        input.style.border = 'none';
+        input.style.background = 'transparent';
+        input.style.color = '#456882';
+
+        const li = this.parentElement;
+        li.innerHTML = '';
+        li.appendChild(input);
+        input.focus();
+        input.select();
+
+        const navigate = () => {
+            const newPage = parseInt(input.value);
+            if (newPage >= 1 && newPage <= totalPages && newPage !== currentPageNum) {
+                changePage(newPage);
+            } else {
+                li.innerHTML = '<span class="page-link editable-page">' + currentPageNum + '</span>';
+                attachEditablePageHandler(li.querySelector('.editable-page'));
+            }
+        };
+
+        input.addEventListener('blur', navigate);
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                navigate();
+            } else if (e.key === 'Escape') {
+                li.innerHTML = '<span class="page-link editable-page">' + currentPageNum + '</span>';
+                attachEditablePageHandler(li.querySelector('.editable-page'));
+            }
         });
-    };
+    });
+}
 
-    const editablePages = document.querySelectorAll('.editable-page');
-    editablePages.forEach(attachDoubleClickHandler);
-});
+function changePage(page) {
+    currentPage = page;
+    loadPrograms();
+}
+
+function searchPrograms() {
+    currentSearch = document.getElementById('searchInput').value;
+    currentPage = 1;
+    loadPrograms();
+}
+
+function sortPrograms() {
+    currentSort = document.getElementById('sortSelect').value;
+    currentPage = 1;
+    loadPrograms();
+}
+
+function addProgram() {
+    const code = document.getElementById('addProgramCode').value.trim();
+    const name = document.getElementById('addProgramName').value.trim();
+    const college_code = document.getElementById('addProgramCollege').value.trim();
+
+    if (!code || !name || !college_code) {
+        showNotification('Code, name, and college are required.', 'danger');
+        return;
+    }
+
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+    fetch('/api/programs', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken,
+        },
+        body: JSON.stringify({ code, name, college_code }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('addProgramModal')).hide();
+            document.getElementById('addProgramCode').value = '';
+            document.getElementById('addProgramName').value = '';
+            loadPrograms();
+            showNotification('Program added successfully!', 'success');
+        } else {
+            showNotification(data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred while adding the program.', 'danger');
+    });
+}
+
+function editProgram(code) {
+    // Fetch program details
+    fetch(`/api/programs/${code}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('editProgramCode').value = data.data.code;
+                document.getElementById('editProgramName').value = data.data.name;
+                document.getElementById('editProgramCollege').value = data.data.college_code;
+                document.getElementById('editProgramModal').dataset.originalCode = code;
+                new bootstrap.Modal(document.getElementById('editProgramModal')).show();
+            } else {
+                showNotification(data.error, 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('An error occurred while fetching program details.', 'danger');
+        });
+}
+
+function updateProgram() {
+    const originalCode = document.getElementById('editProgramModal').dataset.originalCode;
+    const code = document.getElementById('editProgramCode').value.trim();
+    const name = document.getElementById('editProgramName').value.trim();
+    const college_code = document.getElementById('editProgramCollege').value.trim();
+
+    if (!code || !name || !college_code) {
+        showNotification('Code, name, and college are required.', 'danger');
+        return;
+    }
+
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+    fetch(`/api/programs/${originalCode}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken,
+        },
+        body: JSON.stringify({ code, name, college_code }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('editProgramModal')).hide();
+            loadPrograms();
+            showNotification('Program updated successfully!', 'success');
+        } else {
+            showNotification(data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred while updating the program.', 'danger');
+    });
+}
+
+function deleteProgram(code) {
+    document.getElementById('deleteProgramModal').dataset.deleteCode = code;
+    new bootstrap.Modal(document.getElementById('deleteProgramModal')).show();
+}
+
+function confirmDeleteProgram() {
+    const code = document.getElementById('deleteProgramModal').dataset.deleteCode;
+
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+    fetch(`/api/programs/${code}`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRFToken': csrfToken,
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('deleteProgramModal')).hide();
+            loadPrograms();
+            showNotification('Program deleted successfully!', 'success');
+        } else {
+            showNotification(data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred while deleting the program.', 'danger');
+    });
+}
+
+function showNotification(message, type) {
+    const container = document.getElementById('notification-container');
+    const notif = document.createElement('div');
+    notif.className = `notification ${type}`;
+    notif.innerHTML = `
+        <span class="close-btn">&times;</span>
+        <h6>${type.charAt(0).toUpperCase() + type.slice(1)}</h6>
+        <p>${message}</p>
+    `;
+    container.appendChild(notif);
+
+    notif.querySelector('.close-btn').addEventListener('click', () => {
+        notif.style.animation = 'fadeOut 0.3s forwards';
+        setTimeout(() => notif.remove(), 300);
+    });
+
+    setTimeout(() => {
+        notif.style.animation = 'fadeOut 0.3s forwards';
+        setTimeout(() => notif.remove(), 300);
+    }, 3000);
+}
 </script>
 
-{% endblock %}
+    {% endblock %}

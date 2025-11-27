@@ -1,5 +1,5 @@
 from . import colleges_bp
-from flask import render_template, session, redirect, url_for, request, flash
+from flask import render_template, session, redirect, url_for, request, flash, jsonify
 from .models import Colleges
 from .forms import CollegeForm
 
@@ -137,3 +137,142 @@ def delete():
     except Exception as e:
         flash(f"Error deleting college: {e}", "danger")
     return redirect(url_for("colleges.list"))
+
+
+# API Endpoints
+@colleges_bp.route('/api/colleges', methods=['GET'])
+def api_list_colleges():
+    """API endpoint to list colleges with pagination, search, and sort."""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    try:
+        # Get search, sort, and pagination parameters
+        search = request.args.get('q', '')
+        sort_by = request.args.get('sort', 'code')
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 10))
+
+        # Get paginated colleges data
+        colleges_data = Colleges.get_all(search=search, sort_by=sort_by, page=page, per_page=per_page)
+
+        return jsonify({
+            'success': True,
+            'data': colleges_data
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@colleges_bp.route('/api/colleges/<code>', methods=['GET'])
+def api_get_college(code):
+    """API endpoint to get a single college by code."""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    try:
+        college = Colleges.get_by_code(code)
+        if not college:
+            return jsonify({'success': False, 'error': 'College not found'}), 404
+
+        return jsonify({
+            'success': True,
+            'data': college
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@colleges_bp.route('/api/colleges', methods=['POST'])
+def api_create_college():
+    """API endpoint to create a new college."""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    try:
+        data = request.get_json()
+        if not data or 'code' not in data or 'name' not in data:
+            return jsonify({'success': False, 'error': 'Missing required fields: code and name'}), 400
+
+        code = data['code'].strip()
+        name = data['name'].strip()
+
+        if not code or not name:
+            return jsonify({'success': False, 'error': 'Code and name cannot be empty'}), 400
+
+        # Check if college already exists
+        existing = Colleges.get_by_code(code)
+        if existing:
+            return jsonify({'success': False, 'error': 'College with this code already exists'}), 409
+
+        # Create new college
+        Colleges(college_code=code, college_name=name).add()
+
+        return jsonify({
+            'success': True,
+            'message': f'College {name} created successfully',
+            'data': {'code': code, 'name': name}
+        }), 201
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@colleges_bp.route('/api/colleges/<code>', methods=['PUT'])
+def api_update_college(code):
+    """API endpoint to update a college."""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    try:
+        data = request.get_json()
+        if not data or 'name' not in data:
+            return jsonify({'success': False, 'error': 'Missing required field: name'}), 400
+
+        new_name = data['name'].strip()
+        new_code = data.get('code', code).strip()
+
+        if not new_name:
+            return jsonify({'success': False, 'error': 'Name cannot be empty'}), 400
+
+        # Check if target code already exists (if changing code)
+        if new_code != code:
+            existing = Colleges.get_by_code(new_code)
+            if existing:
+                return jsonify({'success': False, 'error': 'College with new code already exists'}), 409
+
+        # Update college
+        updated = Colleges.update_college(code, new_code, new_name)
+        if updated == 0:
+            return jsonify({'success': False, 'error': 'College not found'}), 404
+
+        return jsonify({
+            'success': True,
+            'message': 'College updated successfully',
+            'data': {'code': new_code, 'name': new_name}
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@colleges_bp.route('/api/colleges/<code>', methods=['DELETE'])
+def api_delete_college(code):
+    """API endpoint to delete a college."""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    try:
+        # Check if college has programs
+        if Colleges.has_programs(code):
+            return jsonify({'success': False, 'error': 'Cannot delete college with assigned programs'}), 409
+
+        # Delete college
+        deleted = Colleges.delete(code)
+        if deleted == 0:
+            return jsonify({'success': False, 'error': 'College not found'}), 404
+
+        return jsonify({
+            'success': True,
+            'message': 'College deleted successfully'
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500

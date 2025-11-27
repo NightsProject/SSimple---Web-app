@@ -1,0 +1,362 @@
+{% extends "layouts/base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+  <div class="card">
+    <div class="card-body">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+
+    <!-- Left side: New College button + Search -->
+    <div class="d-flex align-items-center">
+      <!-- New College Button (opens modal) -->
+      <button class="btn btn-success me-3" data-bs-toggle="modal" data-bs-target="#addCollegeModal">
+        Add College
+      </button>
+
+      <!-- Search -->
+      <form class="d-flex" role="search" method="get">
+        <input class="form-control me-2"
+              type="search"
+              placeholder="Search Colleges..."
+              name="q"
+              value="{{ request.args.get('q', '') }}">
+        <button class="btn btn-outline-primary" type="submit">Search</button>
+      </form>
+    </div>
+
+    <!-- Sort -->
+    <form method="get">
+      <select class="form-select" name="sort" onchange="this.form.submit()">
+        <option value="code" {% if request.args.get('sort') == 'code' %}selected{% endif %}>Sort by Code</option>
+        <option value="name" {% if request.args.get('sort') == 'name' %}selected{% endif %}>Sort by Name</option>
+      </select>
+    </form>
+  </div>
+
+  <!-- Table -->
+  <div class="table-responsive">
+    <table class="table table-striped table-hover">
+      <thead>
+        <tr>
+          <th scope="col">#</th>
+          <th scope="col">Code</th>
+          <th scope="col">Name</th>
+          <th scope="col">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for college in colleges %}
+        <tr>
+          <th scope="row">{{ (pagination.page - 1) * pagination.per_page + loop.index }}</th>
+          <td>{{ college.code }}</td>
+          <td>{{ college.name }}</td>
+          <td>
+            <div class="btn-group">
+                <a href="{{ url_for('colleges.update', code=college.code) }}" class="btn btn-sm btn-warning"><i class="bi bi-pencil"></i></a>
+                <button type="button" class="btn btn-sm btn-danger" onclick="deleteCollege('{{ college.code }}')">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+            
+
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="4" class="text-center text-muted">No colleges found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination Controls -->
+  <nav aria-label="Page navigation" class="mt-4">
+    <ul class="pagination justify-content-center">
+
+      <!-- Previous Button -->
+      {% if prev_url %}
+        <li class="page-item">
+          <a class="page-link" href="{{ prev_url }}" aria-label="Previous">
+            <span aria-hidden="true">&laquo;</span> Previous
+          </a>
+        </li>
+      {% else %}
+        <li class="page-item disabled">
+          <span class="page-link"><span aria-hidden="true">&laquo;</span> Previous</span>
+        </li>
+      {% endif %}
+
+      <!-- Page Numbers -->
+      {% set current_page = pagination['page'] %}
+      {% set total_pages = pagination['pages'] %}
+      {% set per_page = pagination['per_page'] %}
+
+      <!-- Always show 1 -->
+      {% if 1 != current_page %}
+        <li class="page-item">
+          <a class="page-link"
+             href="{{ url_for('colleges.list', page=1, q=request.args.get('q', ''), sort=request.args.get('sort', 'code')) }}">
+             1
+          </a>
+        </li>
+      {% else %}
+        <li class="page-item active" aria-current="page">
+          <span class="page-link editable-page">{{ current_page }}</span>
+        </li>
+      {% endif %}
+
+      <!-- Show 2 if not current -->
+      {% if total_pages >= 2 and 2 != current_page %}
+        <li class="page-item">
+          <a class="page-link"
+             href="{{ url_for('colleges.list', page=2, q=request.args.get('q', ''), sort=request.args.get('sort', 'code')) }}">
+             2
+          </a>
+        </li>
+      {% elif 2 == current_page %}
+        <li class="page-item active" aria-current="page">
+          <span class="page-link editable-page">{{ current_page }}</span>
+        </li>
+      {% endif %}
+
+      <!-- Show 3 if not current -->
+      {% if total_pages >= 3 and 3 != current_page %}
+        <li class="page-item">
+          <a class="page-link"
+             href="{{ url_for('colleges.list', page=3, q=request.args.get('q', ''), sort=request.args.get('sort', 'code')) }}">
+             3
+          </a>
+        </li>
+      {% elif 3 == current_page %}
+        <li class="page-item active" aria-current="page">
+          <span class="page-link editable-page">{{ current_page }}</span>
+        </li>
+      {% endif %}
+
+      <!-- Show last page if not already shown -->
+      {% if total_pages > 3 %}
+        {% if total_pages != current_page %}
+          <li class="page-item">
+            <a class="page-link"
+               href="{{ url_for('colleges.list', page=total_pages, q=request.args.get('q', ''), sort=request.args.get('sort', 'code')) }}">
+               {{ total_pages }}
+            </a>
+          </li>
+        {% else %}
+          <li class="page-item active" aria-current="page">
+            <span class="page-link editable-page">{{ current_page }}</span>
+          </li>
+        {% endif %}
+      {% endif %}
+
+      <!-- Next Button -->
+      {% if next_url %}
+        <li class="page-item">
+          <a class="page-link" href="{{ next_url }}" aria-label="Next">
+            Next <span aria-hidden="true">&raquo;</span>
+          </a>
+        </li>
+      {% else %}
+        <li class="page-item disabled">
+          <span class="page-link">Next <span aria-hidden="true">&raquo;</span></span>
+        </li>
+      {% endif %}
+
+    </ul>
+  </nav>
+    </div>
+  </div>
+</div>
+
+<!-- 🟢 Modal: Add College -->
+<div class="modal fade" id="addCollegeModal" tabindex="-1" aria-labelledby="addCollegeModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title" id="addCollegeModalLabel">Add New College</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <form action="{{ url_for('colleges.add') }}" method="post">
+        {{ college_form.hidden_tag() }} 
+
+        <div class="modal-body">
+          <div class="mb-3">
+            {{ college_form.code.label(class="form-label") }}
+            {{ college_form.code(class="form-control", id="collegeCode", placeholder="e.g., CC") }}
+            {% if college_form.code.errors %}
+              <div class="text-danger">
+                {% for error in college_form.code.errors %}
+                  <small>{{ error }}</small><br>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+          <div class="mb-3">
+            {{ college_form.name.label(class="form-label") }}
+            {{ college_form.name(class="form-control", id="collegeName", placeholder="e.g., College of Computing") }}
+            {% if college_form.name.errors %}
+              <div class="text-danger">
+                {% for error in college_form.name.errors %}
+                  <small>{{ error }}</small><br>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+          {{ college_form.submit(class="btn btn-success") }}
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+    {# Edit modal: shown when server sets show_edit_modal and provides edit_form #}
+    {% if edit_form is defined %}
+    <div class="modal fade" id="editCollegeModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit College</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="{{ url_for('colleges.update') }}">
+                    <div class="modal-body">
+                        {{ edit_form.hidden_tag() }}
+                        <input type="hidden" name="original_code" value="{{ edit_code }}">
+
+                        <div class="mb-3">
+                            {{ edit_form.code.label(class="form-label") }}
+                            {{ edit_form.code(class="form-control") }}
+                        </div>
+                        <div class="mb-3">
+                            {{ edit_form.name.label(class="form-label") }}
+                            {{ edit_form.name(class="form-control") }}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        {{ edit_form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% if show_edit_modal %}
+      <script>
+        // When the page loads, open the edit modal (server-side flagged)
+        document.addEventListener('DOMContentLoaded', function() {
+          var editModalEl = document.getElementById('editCollegeModal');
+          if (editModalEl) {
+            var modal = new bootstrap.Modal(editModalEl);
+            modal.show();
+          }
+        });
+      </script>
+    {% endif %}
+    {% if show_modal %}
+      <script>
+        // When the page loads, open the add modal (server-side flagged)
+        document.addEventListener('DOMContentLoaded', function() {
+          var addModalEl = document.getElementById('addCollegeModal');
+          if (addModalEl) {
+            var modal = new bootstrap.Modal(addModalEl);
+            modal.show();
+          }
+        });
+      </script>
+    {% endif %}
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteCollegeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete College</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete this college? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteCollegeForm" method="POST" class="d-inline">
+                    <input type="hidden" name="code" id="delete_college_code" value="">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+function deleteCollege(code) {
+    // Set up the delete form and show confirmation modal
+    document.getElementById('deleteCollegeForm').action = `/colleges/delete`;
+    var codeField = document.getElementById('delete_college_code');
+    if (codeField) codeField.value = code;
+    var deleteModal = new bootstrap.Modal(document.getElementById('deleteCollegeModal'));
+    deleteModal.show();
+}
+
+// Pagination editable page functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const attachDoubleClickHandler = (span) => {
+        span.addEventListener('dblclick', function() {
+            const currentPage = parseInt(this.textContent);
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.value = currentPage;
+            input.min = 1;
+            input.max = {{ total_pages }};
+            input.className = 'form-control form-control-sm d-inline-block';
+            input.style.width = '60px';
+            input.style.border = 'none';
+            input.style.background = 'transparent';
+            input.style.color = '#456882';
+
+            const li = this.parentElement;
+            li.innerHTML = '';
+            li.appendChild(input);
+            input.focus();
+            input.select();
+
+            const navigate = () => {
+                const newPage = parseInt(input.value);
+                if (newPage >= 1 && newPage <= {{ total_pages }} && newPage !== currentPage) {
+                    const url = new URL(window.location);
+                    url.searchParams.set('page', newPage);
+                    window.location.href = url.toString();
+                } else {
+                    li.innerHTML = '<span class="page-link editable-page">' + currentPage + '</span>';
+                    attachDoubleClickHandler(li.querySelector('.editable-page'));
+                }
+            };
+
+            input.addEventListener('blur', navigate);
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    navigate();
+                } else if (e.key === 'Escape') {
+                    li.innerHTML = '<span class="page-link editable-page">' + currentPage + '</span>';
+                    attachDoubleClickHandler(li.querySelector('.editable-page'));
+                }
+            });
+        });
+    };
+
+    const editablePages = document.querySelectorAll('.editable-page');
+    editablePages.forEach(attachDoubleClickHandler);
+});
+</script>
+
+    {% endblock %}
+

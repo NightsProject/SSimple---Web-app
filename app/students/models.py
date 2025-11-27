@@ -3,13 +3,14 @@ from datetime import datetime
 
 
 class Students:
-    def __init__(self, id_number=None, first_name=None, last_name=None, year=None, gender=None, program_code=None):
+    def __init__(self, id_number=None, first_name=None, last_name=None, year=None, gender=None, program_code=None, file_link=None):
         self.id_number = id_number
         self.first_name = first_name
         self.last_name = last_name
         self.program_code = program_code
         self.year = year
         self.gender = gender
+        self.file_link = file_link
 
     def add(self):
         conn = db_pool.getconn()
@@ -17,11 +18,11 @@ class Students:
             with conn.cursor() as cursor:
                 cursor.execute(
                     """
-                    INSERT INTO students (id_number, first_name, last_name, program_code, year_level, gender, date_registered)
-                    VALUES (%s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
+                    INSERT INTO students (id_number, first_name, last_name, program_code, year_level, gender, date_registered, file_link)
+                    VALUES (%s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, %s)
                     ON CONFLICT (id_number) DO NOTHING
                     """,
-                    (self.id_number, self.first_name, self.last_name, self.program_code, self.year, self.gender)
+                    (self.id_number, self.first_name, self.last_name, self.program_code, self.year, self.gender, self.file_link)
                 )
                 conn.commit()
         finally:
@@ -106,7 +107,7 @@ class Students:
                 # Now get paginated results
                 query = """
                     SELECT s.id_number, s.first_name, s.last_name, s.program_code,
-                           s.year_level, s.gender, p.program_name, c.college_name, s.date_registered
+                           s.year_level, s.gender, p.program_name, c.college_name, s.date_registered, s.file_link
                     FROM students s
                     LEFT JOIN programs p ON s.program_code = p.program_code
                     LEFT JOIN colleges c ON p.college_code = c.college_code
@@ -154,7 +155,8 @@ class Students:
                         "gender": r[5],
                         "program_name": r[6],
                         "college_name": r[7],
-                        "date_registered": r[8]
+                        "date_registered": r[8],
+                        "file_link": r[9]
                     })
 
                 total_pages = (total + per_page - 1) // per_page  # Ceiling division
@@ -176,8 +178,12 @@ class Students:
             with conn.cursor() as cursor:
                 cursor.execute(
                     """
-                    SELECT id_number, first_name, last_name, program_code, year_level, gender, date_registered
-                    FROM students WHERE id_number = %s
+                    SELECT s.id_number, s.first_name, s.last_name, s.program_code, s.year_level, s.gender, s.date_registered, s.file_link,
+                           p.program_name, c.college_name
+                    FROM students s
+                    LEFT JOIN programs p ON s.program_code = p.program_code
+                    LEFT JOIN colleges c ON p.college_code = c.college_code
+                    WHERE s.id_number = %s
                     """,
                     (id_number,)
                 )
@@ -191,25 +197,39 @@ class Students:
                     "program_code": row[3],
                     "year": row[4],
                     "gender": row[5],
-                    "date_registered": row[6]
+                    "date_registered": row[6],
+                    "file_link": row[7],
+                    "program_name": row[8],
+                    "college_name": row[9]
                 }
         finally:
             db_pool.putconn(conn)
 
     @staticmethod
-    def update(original_id, new_id, first_name, last_name, program_code, year, gender):
+    def update(original_id, new_id, first_name, last_name, program_code, year, gender, file_link=None):
         conn = db_pool.getconn()
         try:
             with conn.cursor() as cursor:
-                cursor.execute(
-                    """
-                    UPDATE students
-                    SET id_number = %s, first_name = %s, last_name = %s,
-                        program_code = %s, year_level = %s, gender = %s
-                    WHERE id_number = %s
-                    """,
-                    (new_id, first_name, last_name, program_code, year, gender, original_id)
-                )
+                if file_link is not None:
+                    cursor.execute(
+                        """
+                        UPDATE students
+                        SET id_number = %s, first_name = %s, last_name = %s,
+                            program_code = %s, year_level = %s, gender = %s, file_link = %s
+                        WHERE id_number = %s
+                        """,
+                        (new_id, first_name, last_name, program_code, year, gender, file_link, original_id)
+                    )
+                else:
+                    cursor.execute(
+                        """
+                        UPDATE students
+                        SET id_number = %s, first_name = %s, last_name = %s,
+                            program_code = %s, year_level = %s, gender = %s
+                        WHERE id_number = %s
+                        """,
+                        (new_id, first_name, last_name, program_code, year, gender, original_id)
+                    )
                 updated = cursor.rowcount
                 conn.commit()
                 return updated

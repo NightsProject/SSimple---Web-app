@@ -4,13 +4,13 @@ from config import DB_NAME, DB_USERNAME, DB_PASSWORD, DB_HOST, DB_PORT
 from dotenv import load_dotenv
 
 def create_database():
-    
+
     load_dotenv('.env')
-    
-    
+
+
     """Connects to the default 'postgres' DB and creates DB_NAME if it doesn't exist."""
     conn = psycopg2.connect(
-        dbname=DB_NAME,  
+        dbname='postgres',
         user=DB_USERNAME,
         password=DB_PASSWORD,
         host=DB_HOST,
@@ -131,6 +131,7 @@ def ready_student_table():
         gender VARCHAR(10) CHECK (gender IN ('Male', 'Female', 'Other')),
         program_code VARCHAR(20),
         date_registered TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        file_link VARCHAR(255),
         CONSTRAINT fk_program
             FOREIGN KEY (program_code)
             REFERENCES programs(program_code)
@@ -140,11 +141,16 @@ def ready_student_table():
     """
     execute_query(query)
 
-    # Add column if not exists
+    # Add columns if not exists
     alter_query = """
     ALTER TABLE students ADD COLUMN IF NOT EXISTS date_registered TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     """
     execute_query(alter_query)
+
+    alter_query_file_link = """
+    ALTER TABLE students ADD COLUMN IF NOT EXISTS file_link VARCHAR(255)
+    """
+    execute_query(alter_query_file_link)
 
     insert_query = """
     INSERT INTO students (id_number, first_name, last_name, year_level, gender, program_code) VALUES %s
@@ -253,7 +259,6 @@ def ready_users_table():
     finally:
         cur.close()
         conn.close()
-
 
 def ready_user_info_table():
     """Create user_info table with a starting sequence."""
