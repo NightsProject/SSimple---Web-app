@@ -14,14 +14,25 @@ def students_list():
     if 'user_id' not in session:
         return redirect(url_for('user.login'))
 
-    # Get search, sort, and pagination parameters
+    # Get search, sort, pagination, and filter parameters
     search = request.args.get('q', '')
     sort_by = request.args.get('sort', 'id')
     page = int(request.args.get('page', 1))
     per_page = int(request.args.get('per_page', 10))
+    program_code_filter = request.args.get('program_code', '')
+    year_filter = request.args.get('year', '')
+    gender_filter = request.args.get('gender', '')
 
-    # Get paginated students list with search and sort applied
-    students_data = Students.get_all(search=search, sort_by=sort_by, page=page, per_page=per_page)
+    # Get paginated students list with search, sort, and filters applied
+    students_data = Students.get_all(
+        search=search,
+        sort_by=sort_by,
+        page=page,
+        per_page=per_page,
+        program_code_filter=program_code_filter if program_code_filter else None,
+        year_filter=year_filter if year_filter else None,
+        gender_filter=gender_filter if gender_filter else None
+    )
     students = students_data['items']
 
     # prepare add/edit form and program choices so modal options are available on page load
@@ -45,6 +56,13 @@ def students_list():
     def url_for_page(page_num):
         args = request.args.copy()
         args['page'] = page_num
+        # Preserve filter parameters in pagination URLs
+        if program_code_filter:
+            args['program_code'] = program_code_filter
+        if year_filter:
+            args['year'] = year_filter
+        if gender_filter:
+            args['gender'] = gender_filter
         return url_for('students.students_list', **args)
 
     prev_url = url_for_page(page - 1) if page > 1 else None
@@ -263,19 +281,30 @@ def delete_student():
 # API Endpoints
 @students_bp.route('/api/students', methods=['GET'])
 def api_list_students():
-    """API endpoint to list students with pagination, search, and sort."""
+    """API endpoint to list students with pagination, search, sort, and filters."""
     if 'user_id' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
 
     try:
-        # Get search, sort, and pagination parameters
+        # Get search, sort, pagination, and filter parameters
         search = request.args.get('q', '')
         sort_by = request.args.get('sort', 'id')
         page = int(request.args.get('page', 1))
         per_page = int(request.args.get('per_page', 10))
+        program_code_filter = request.args.get('program_code', '')
+        year_filter = request.args.get('year', '')
+        gender_filter = request.args.get('gender', '')
 
-        # Get paginated students data
-        students_data = Students.get_all(search=search, sort_by=sort_by, page=page, per_page=per_page)
+        # Get paginated students data with filters
+        students_data = Students.get_all(
+            search=search,
+            sort_by=sort_by,
+            page=page,
+            per_page=per_page,
+            program_code_filter=program_code_filter if program_code_filter else None,
+            year_filter=year_filter if year_filter else None,
+            gender_filter=gender_filter if gender_filter else None
+        )
 
         return jsonify({
             'success': True,

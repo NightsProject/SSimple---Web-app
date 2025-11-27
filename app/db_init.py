@@ -158,7 +158,7 @@ def ready_student_table():
     """
     first_names = ['John', 'Jane', 'Alice', 'Bob', 'Charlie', 'Diana', 'Eve', 'Frank', 'Grace', 'Henry', 'Ivy', 'Jack', 'Kate', 'Liam', 'Mia', 'Noah', 'Olivia', 'Peter', 'Quinn', 'Ryan', 'Sophia', 'Tyler', 'Uma', 'Victor', 'Wendy', 'Xander', 'Yara', 'Zoe']
     last_names = ['Doe', 'Smith', 'Johnson', 'Williams', 'Brown', 'Davis', 'Miller', 'Wilson', 'Moore', 'Taylor', 'Anderson', 'Thomas', 'Jackson', 'White', 'Harris', 'Martin', 'Thompson', 'Garcia', 'Martinez', 'Robinson', 'Clark', 'Rodriguez', 'Lewis', 'Lee', 'Walker', 'Hall', 'Allen', 'Young', 'Hernandez', 'King']
-    year_levels = ['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year', '6th Year']
+    year_levels = ['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year']
     programs = ['BSCE', 'BSEE', 'BSME', 'BSCS', 'BSMATH', 'BSPHY', 'BAENG', 'BAHIST', 'BAART']
     genders = ['Male', 'Female', 'Other']
 
@@ -194,7 +194,7 @@ def ready_year_level_table():
     ON CONFLICT (year_level) DO NOTHING
     """
     year_levels = [('1st Year',), ('2nd Year',), ('3rd Year',),
-                   ('4th Year',), ('5th Year',), ('6th Year',)]
+                   ('4th Year',), ('5th Year',)]
     conn = get_connection()
     cur = conn.cursor()
     try:

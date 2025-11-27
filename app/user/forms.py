@@ -15,7 +15,6 @@ class LoginForm(FlaskForm):
         validators=[DataRequired()],
         render_kw={"placeholder": "Enter your password"}
     )
-    remember_me = BooleanField('Remember Me')
     submit = SubmitField("Log in")
 class RegistrationForm(FlaskForm):
     """Simple registration form for the 'New' button."""

@@ -79,7 +79,7 @@ class Students:
             db_pool.putconn(conn)
 
     @staticmethod
-    def get_all(search=None, sort_by=None, page=1, per_page=10):
+    def get_all(search=None, sort_by=None, page=1, per_page=10, program_code_filter=None, year_filter=None, gender_filter=None):
         """Return paginated students with program details joined."""
         conn = db_pool.getconn()
         try:
@@ -95,24 +95,39 @@ class Students:
                     LEFT JOIN colleges c ON p.college_code = c.college_code
                 """
                 count_params = []
+                where_clauses = []
 
                 if search:
-                    count_query += """
-                    WHERE 
-                        LOWER(s.id_number) LIKE LOWER(%s)
+                    where_clauses.append("""
+                        (LOWER(s.id_number) LIKE LOWER(%s)
                         OR LOWER(s.first_name) LIKE LOWER(%s)
                         OR LOWER(s.last_name) LIKE LOWER(%s)
                         OR LOWER(s.program_code) LIKE LOWER(%s)
                         OR LOWER(s.year_level::text) LIKE LOWER(%s)
                         OR LOWER(s.gender) LIKE LOWER(%s)
-                        OR LOWER(p.program_name) LIKE LOWER(%s)
-                    """
+                        OR LOWER(p.program_name) LIKE LOWER(%s))
+                    """)
                     search_term = f"%{search}%"
                     count_params.extend([
                         search_term, search_term, search_term,
                         search_term, search_term, search_term,
                         search_term
                     ])
+
+                if program_code_filter:
+                    where_clauses.append("s.program_code = %s")
+                    count_params.append(program_code_filter)
+
+                if year_filter:
+                    where_clauses.append("s.year_level = %s")
+                    count_params.append(year_filter)
+
+                if gender_filter:
+                    where_clauses.append("s.gender = %s")
+                    count_params.append(gender_filter)
+
+                if where_clauses:
+                    count_query += " WHERE " + " AND ".join(where_clauses)
 
                 cursor.execute(count_query, count_params)
                 total = cursor.fetchone()[0]
@@ -130,22 +145,9 @@ class Students:
                 """
                 params = []
 
-                if search:
-                    query += """
-                    WHERE 
-                        LOWER(s.id_number) LIKE LOWER(%s)
-                        OR LOWER(s.first_name) LIKE LOWER(%s)
-                        OR LOWER(s.last_name) LIKE LOWER(%s)
-                        OR LOWER(s.program_code) LIKE LOWER(%s)
-                        OR LOWER(s.year_level::text) LIKE LOWER(%s)
-                        OR LOWER(s.gender) LIKE LOWER(%s)
-                        OR LOWER(p.program_name) LIKE LOWER(%s)
-                    """
-                    params.extend([
-                        search_term, search_term, search_term,
-                        search_term, search_term, search_term,
-                        search_term
-                    ])
+                if where_clauses:
+                    query += " WHERE " + " AND ".join(where_clauses)
+                    params.extend(count_params)
 
                 # --------------------------------------------
                 # 3. SORTING
