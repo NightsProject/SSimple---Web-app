@@ -16,7 +16,7 @@ def create_app(test_config=None):
 
     Bootstrap(app)
     
-    create_database.initialize_db()
+    #create_database.initialize_db()
     
     #Initialize connection pool ONCE
     global db_pool

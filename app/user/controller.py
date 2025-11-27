@@ -5,6 +5,11 @@ from . import user_bp
 from .models import Users
 from app.user.forms import RegistrationForm, LoginForm, SettingsForm
 from app import csrf
+from config import SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_BUCKET_NAME
+from supabase import create_client, Client
+
+
+supabase = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
 
 @user_bp.route('/login', methods=['POST', 'GET'])
 def login():
@@ -32,17 +37,54 @@ def register():
     """Handles user registration (maps to signup.html)."""
     form = RegistrationForm()
     if request.method == 'POST' and form.validate_on_submit():
-        profile_picture_url = 'https://via.placeholder.com/36'
+        profile_picture_url = None
         if form.profile_picture.data:
             file = form.profile_picture.data
-            filename = secure_filename(file.filename)
-            unique_filename = f"{os.urandom(8).hex()}_{filename}"
-            file_path = os.path.join(current_app.root_path, 'static', 'uploads', unique_filename)
-            file.save(file_path)
-            profile_picture_url = url_for('static', filename=f'uploads/{unique_filename}')
+            # Validate file type
+            allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
+            if '.' not in file.filename or file.filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
+                flash('Invalid file type. Only PNG, JPG, JPEG, GIF allowed.', 'danger')
+                return redirect(url_for('.register'))
+
+            # Upload to Supabase - will use user ID after creation, for now use temp path
+            file_extension = file.filename.rsplit('.', 1)[1].lower()
+            temp_filename = f"temp_{os.urandom(8).hex()}.{file_extension}"
+            file_path = f"users/{temp_filename}"
+
+            try:
+                file_bytes = file.read()
+                content_type = file.mimetype
+                upload_response = supabase.storage.from_(SUPABASE_BUCKET_NAME).upload(
+                    path=file_path,
+                    file=file_bytes,
+                    file_options={"content-type": content_type}
+                )
+                # Get public URL
+                profile_picture_url = supabase.storage.from_(SUPABASE_BUCKET_NAME).get_public_url(file_path)
+            except Exception as upload_error:
+                flash(f'File upload failed: {str(upload_error)}', 'danger')
+                return redirect(url_for('.register'))
 
         user = Users(email=form.email.data, password=form.password.data, username=form.username.data, profile_picture=profile_picture_url)
         user.add()
+
+        # If we uploaded a temp file, rename it to use the actual user ID
+        if form.profile_picture.data and profile_picture_url != 'https://via.placeholder.com/36':
+            try:
+                user_data = Users.get_by_username(form.username.data)
+                if user_data:
+                    user_id = user_data['id']
+                    new_file_path = f"users/{user_id}.{file_extension}"
+                    # Move file to proper path
+                    supabase.storage.from_(SUPABASE_BUCKET_NAME).move(file_path, new_file_path)
+                    # Update URL
+                    profile_picture_url = supabase.storage.from_(SUPABASE_BUCKET_NAME).get_public_url(new_file_path)
+                    # Update user record
+                    Users.update_user(user_id, {'username': form.username.data, 'email': form.email.data, 'profile_picture': profile_picture_url})
+            except Exception as e:
+                print(f"Error renaming profile picture: {e}")
+                # Keep the temp file for now
+
         flash(f'User {form.username.data} registered successfully. Please log in.', 'success')
         return redirect(url_for('.login')) # Redirect to login after registration
     return render_template('signup.html', form=form)
@@ -78,14 +120,55 @@ def settings():
                 form.birthday.data = user_data.get('birthday')
 
     if request.method == 'POST' and form.validate_on_submit():
-        profile_picture_url = session.get('profile_picture', 'https://via.placeholder.com/36')
-        if form.profile_picture.data:
+        profile_picture_url = session.get('profile_picture')
+        clear_picture = request.form.get('clear_picture') == 'true'
+
+        if clear_picture:
+            # Delete existing file from Supabase if it exists
+            try:
+                existing_user = Users.get_user_with_info(user_id)
+                if existing_user and existing_user.get('profile_picture') and not existing_user['profile_picture'].startswith('https://via.placeholder.com'):
+                    # Try to delete possible extensions
+                    for ext in ['png', 'jpg', 'jpeg', 'gif']:
+                        try:
+                            supabase.storage.from_(SUPABASE_BUCKET_NAME).remove([f"users/{user_id}.{ext}"])
+                        except:
+                            pass  # File might not exist with this extension
+            except Exception as e:
+                print(f"Error deleting old file: {e}")
+            profile_picture_url = None  # Clear the picture
+        elif form.profile_picture.data:
             file = form.profile_picture.data
-            filename = secure_filename(file.filename)
-            unique_filename = f"{os.urandom(8).hex()}_{filename}"
-            file_path = os.path.join(current_app.root_path, 'static', 'uploads', unique_filename)
-            file.save(file_path)
-            profile_picture_url = url_for('static', filename=f'uploads/{unique_filename}')
+            # Validate file type
+            allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
+            if '.' not in file.filename or file.filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
+                flash('Invalid file type. Only PNG, JPG, JPEG, GIF allowed.', 'danger')
+                return redirect(url_for('.settings'))
+
+            # Upload to Supabase - rename file to user ID
+            file_extension = file.filename.rsplit('.', 1)[1].lower()
+            filename = f"{user_id}.{file_extension}"
+            file_path = f"users/{filename}"
+
+            try:
+                # Delete old file if exists
+                try:
+                    supabase.storage.from_(SUPABASE_BUCKET_NAME).remove([f"users/{user_id}.{file_extension}"])
+                except:
+                    pass  # Old file might not exist or different extension
+
+                file_bytes = file.read()
+                content_type = file.mimetype
+                upload_response = supabase.storage.from_(SUPABASE_BUCKET_NAME).upload(
+                    path=file_path,
+                    file=file_bytes,
+                    file_options={"content-type": content_type}
+                )
+                # Get public URL
+                profile_picture_url = supabase.storage.from_(SUPABASE_BUCKET_NAME).get_public_url(file_path)
+            except Exception as upload_error:
+                flash(f'File upload failed: {str(upload_error)}', 'danger')
+                return redirect(url_for('.settings'))
 
         # Handle password change
         password_updated = False
@@ -165,7 +248,7 @@ def api_login():
                 'data': {
                     'user_id': user['id'],
                     'username': user['username'],
-                    'profile_picture': user['profile_picture']
+                    'profile_picture': user['profile_picture'] or None
                 }
             })
         else:
@@ -209,19 +292,53 @@ def api_register():
             return jsonify({'success': False, 'error': 'Email already exists'}), 409
 
         # Handle profile picture upload
-        profile_picture_url = 'https://via.placeholder.com/36'
+        profile_picture_url = None
         if 'profile_picture' in request.files:
             file = request.files['profile_picture']
             if file and file.filename:
-                filename = secure_filename(file.filename)
-                unique_filename = f"{os.urandom(8).hex()}_{filename}"
-                file_path = os.path.join(current_app.root_path, 'static', 'uploads', unique_filename)
-                file.save(file_path)
-                profile_picture_url = url_for('static', filename=f'uploads/{unique_filename}')
+                # Validate file type
+                allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
+                if '.' not in file.filename or file.filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
+                    return jsonify({'success': False, 'error': 'Invalid file type. Only PNG, JPG, JPEG, GIF allowed.'}), 400
+
+                # Upload to Supabase - will use user ID after creation, for now use temp path
+                file_extension = file.filename.rsplit('.', 1)[1].lower()
+                temp_filename = f"temp_{os.urandom(8).hex()}.{file_extension}"
+                file_path = f"users/{temp_filename}"
+
+                try:
+                    file_bytes = file.read()
+                    content_type = file.mimetype
+                    upload_response = supabase.storage.from_(SUPABASE_BUCKET_NAME).upload(
+                        path=file_path,
+                        file=file_bytes,
+                        file_options={"content-type": content_type}
+                    )
+                    # Get public URL
+                    profile_picture_url = supabase.storage.from_(SUPABASE_BUCKET_NAME).get_public_url(file_path)
+                except Exception as upload_error:
+                    return jsonify({'success': False, 'error': f'File upload failed: {str(upload_error)}'}), 500
 
         # Create new user
         user = Users(email=email, password=password, username=username, profile_picture=profile_picture_url)
         user.add()
+
+        # If we uploaded a temp file, rename it to use the actual user ID
+        if 'profile_picture' in request.files:
+            try:
+                user_data = Users.get_by_username(username)
+                if user_data:
+                    user_id = user_data['id']
+                    new_file_path = f"users/{user_id}.{file_extension}"
+                    # Move file to proper path
+                    supabase.storage.from_(SUPABASE_BUCKET_NAME).move(file_path, new_file_path)
+                    # Update URL
+                    profile_picture_url = supabase.storage.from_(SUPABASE_BUCKET_NAME).get_public_url(new_file_path)
+                    # Update user record
+                    Users.update_user(user_id, {'username': username, 'email': email, 'profile_picture': profile_picture_url})
+            except Exception as e:
+                print(f"Error renaming profile picture: {e}")
+                # Keep the temp file for now
 
         return jsonify({
             'success': True,
@@ -264,7 +381,19 @@ def api_update_profile():
 
     try:
         user_id = session['user_id']
-        data = request.get_json()
+
+        # Handle both JSON and form data
+        if request.content_type.startswith('multipart/form-data'):
+            # Form data with file upload
+            data = request.form.to_dict()
+            profile_picture = request.files.get('profile_picture')
+            clear_picture = request.form.get('clear_picture') == 'True'
+        else:
+            # JSON data
+            data = request.get_json()
+            profile_picture = None
+            clear_picture = data.get('clear_picture', False) if data else False
+
         if not data:
             return jsonify({'success': False, 'error': 'No data provided'}), 400
 
@@ -282,12 +411,60 @@ def api_update_profile():
             hashed_password = hashlib.md5(new_password.encode()).hexdigest()
             Users.update_password(user_id, hashed_password)
 
+        # Handle profile picture upload or clearing
+        profile_picture_url = None
+        if clear_picture:
+            # Delete existing file from Supabase if it exists
+            try:
+                existing_user = Users.get_user_with_info(user_id)
+                if existing_user and existing_user.get('profile_picture') and not existing_user['profile_picture'].startswith('https://via.placeholder.com'):
+                    # Try to delete possible extensions
+                    for ext in ['png', 'jpg', 'jpeg', 'gif']:
+                        try:
+                            supabase.storage.from_(SUPABASE_BUCKET_NAME).remove([f"users/{user_id}.{ext}"])
+                        except:
+                            pass  # File might not exist with this extension
+            except Exception as e:
+                print(f"Error deleting old file: {e}")
+            # profile_picture_url remains None for clearing
+        elif profile_picture and profile_picture.filename:
+            # Validate file type
+            allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
+            if '.' not in profile_picture.filename or profile_picture.filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
+                return jsonify({'success': False, 'error': 'Invalid file type. Only PNG, JPG, JPEG, GIF allowed.'}), 400
+
+            # Upload to Supabase - rename file to user ID
+            file_extension = profile_picture.filename.rsplit('.', 1)[1].lower()
+            filename = f"{user_id}.{file_extension}"
+            file_path = f"users/{filename}"
+
+            try:
+                # Delete old file if exists
+                try:
+                    supabase.storage.from_(SUPABASE_BUCKET_NAME).remove([f"users/{user_id}.{file_extension}"])
+                except:
+                    pass  # Old file might not exist or different extension
+
+                file_bytes = profile_picture.read()
+                content_type = profile_picture.mimetype
+                upload_response = supabase.storage.from_(SUPABASE_BUCKET_NAME).upload(
+                    path=file_path,
+                    file=file_bytes,
+                    file_options={"content-type": content_type}
+                )
+                # Get public URL
+                profile_picture_url = supabase.storage.from_(SUPABASE_BUCKET_NAME).get_public_url(file_path)
+            except Exception as upload_error:
+                return jsonify({'success': False, 'error': f'File upload failed: {str(upload_error)}'}), 500
+
         # Update user data
         user_update_data = {}
         if 'username' in data:
             user_update_data['username'] = data['username'].strip()
         if 'email' in data:
             user_update_data['email'] = data['email'].strip()
+        if profile_picture_url is not None:
+            user_update_data['profile_picture'] = profile_picture_url
 
         if user_update_data:
             Users.update_user(user_id, user_update_data)
@@ -304,9 +481,11 @@ def api_update_profile():
         if info_update_data:
             Users.update_user_info(user_id, info_update_data)
 
-        # Update session if username changed
+        # Update session if username or profile picture changed
         if 'username' in user_update_data:
             session['username'] = user_update_data['username']
+        if profile_picture_url is not None:
+            session['profile_picture'] = profile_picture_url
 
         return jsonify({
             'success': True,

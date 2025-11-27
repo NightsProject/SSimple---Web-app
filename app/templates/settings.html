@@ -4,6 +4,45 @@
 {% block title %}Settings{% endblock %}
 
 {% block content %}
+<script>
+function clearProfilePicture() {
+    // Set the clear flag
+    document.getElementById('clearPictureFlag').value = 'true';
+
+    // Hide the current picture display and clear button
+    document.getElementById('currentProfilePicture').innerHTML = '<small class="text-muted">Picture will be cleared</small>';
+    document.getElementById('clearPictureButton').style.display = 'none';
+
+    // Clear the file input
+    document.getElementById('profile_picture').value = '';
+
+    // Show notification
+    showNotification('Profile picture will be cleared when you update your settings.', 'info');
+}
+
+function showNotification(message, type) {
+    const container = document.getElementById('notification-container') || document.body;
+    const notif = document.createElement('div');
+    notif.className = `notification ${type}`;
+    notif.innerHTML = `
+        <span class="close-btn">&times;</span>
+        <h6>${type.charAt(0).toUpperCase() + type.slice(1)}</h6>
+        <p>${message}</p>
+    `;
+    container.appendChild(notif);
+
+    notif.querySelector('.close-btn').addEventListener('click', () => {
+        notif.style.animation = 'fadeOut 0.3s forwards';
+        setTimeout(() => notif.remove(), 300);
+    });
+
+    setTimeout(() => {
+        notif.style.animation = 'fadeOut 0.3s forwards';
+        setTimeout(() => notif.remove(), 300);
+    }, 3000);
+}
+</script>
+
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-8">
@@ -85,7 +124,26 @@
                                     {% endfor %}
                                 </div>
                             {% endif %}
-                            <small class="form-text text-muted">Optional. Upload a new profile picture (JPG, PNG, JPEG only).</small>
+                            <small class="form-text text-muted">Optional. Upload a new profile picture (JPG, PNG, JPEG, GIF only). Leave empty to keep current picture.</small>
+                            <div id="currentProfilePicture" class="mt-2">
+                                {% if session.profile_picture %}
+                                    <div class="d-flex align-items-center">
+                                        <img src="{{ session.profile_picture }}" alt="Current Profile" class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                                        <small class="text-muted">Current profile picture</small>
+                                    </div>
+                                {% else %}
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;"><i class="bi bi-person text-white"></i></div>
+                                        <small class="text-muted">No profile picture uploaded</small>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div id="clearPictureButton" class="mt-2" {% if not session.profile_picture %}style="display: none;"{% endif %}>
+                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="clearProfilePicture()">
+                                    <i class="bi bi-trash"></i> Clear Picture
+                                </button>
+                            </div>
+                            <input type="hidden" name="clear_picture" id="clearPictureFlag" value="false">
                         </div>
                         <hr>
                         <h5 class="mb-3">Change Password</h5>

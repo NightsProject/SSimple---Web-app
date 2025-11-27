@@ -432,6 +432,7 @@ def api_update_student(id_number):
             gender = request.form.get('gender', '').strip()
             new_id = request.form.get('id_number', id_number).strip()
             profile_picture = request.files.get('profile_picture')
+            clear_picture = request.form.get('clear_picture') == 'True'
         else:
             # JSON data
             data = request.get_json()
@@ -446,6 +447,7 @@ def api_update_student(id_number):
             gender = data['gender'].strip()
             new_id = data.get('id_number', id_number).strip()
             profile_picture = None
+            clear_picture = data.get('clear_picture', False)
 
         if not all([first_name, last_name, program_code, gender]) or year is None:
             return jsonify({'success': False, 'error': 'All fields must be non-empty'}), 400
@@ -470,9 +472,23 @@ def api_update_student(id_number):
             return jsonify({'success': False, 'error': 'Year must be one of: 1st Year, 2nd Year, 3rd Year, 4th Year, 5th Year'}), 400
 
         print(profile_picture)
-        # Handle profile picture upload
+        # Handle profile picture upload or clearing
         file_link = None
-        if profile_picture and profile_picture.filename:
+        if clear_picture:
+            # Delete existing file from Supabase if it exists
+            try:
+                existing_student = Students.get_by_id(id_number)
+                if existing_student and existing_student.get('file_link'):
+                    # Try to delete possible extensions
+                    for ext in ['png', 'jpg', 'jpeg', 'gif']:
+                        try:
+                            supabase.storage.from_(SUPABASE_BUCKET_NAME).remove([f"students/{id_number}.{ext}"])
+                        except:
+                            pass  # File might not exist with this extension
+            except Exception as e:
+                print(f"Error deleting old file: {e}")
+            # file_link remains None for clearing
+        elif profile_picture and profile_picture.filename:
             # Validate file type
             allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
             if '.' not in profile_picture.filename or profile_picture.filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
@@ -514,7 +530,8 @@ def api_update_student(id_number):
             program_code=program_code,
             year=year,
             gender=gender,
-            file_link=file_link
+            file_link=file_link,
+            clear_picture=clear_picture
         )
         if updated == 0:
             return jsonify({'success': False, 'error': 'Student not found'}), 404

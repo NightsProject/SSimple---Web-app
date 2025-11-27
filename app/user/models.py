@@ -8,7 +8,7 @@ class Users:
         self.username = username
         self.password = password
         self.email = email
-        self.profile_picture = profile_picture or 'https://via.placeholder.com/36'
+        self.profile_picture = profile_picture  # No default - will be handled in templates
 
     @classmethod
     def authenticate(cls, username, password):

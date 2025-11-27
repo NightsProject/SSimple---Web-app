@@ -29,7 +29,10 @@ class Programs:
         conn = db_pool.getconn()
         try:
             with conn.cursor() as cursor:
-                # First, get total count for pagination
+
+                # --------------------------------------------
+                # 1. COUNT QUERY
+                # --------------------------------------------
                 count_query = """
                     SELECT COUNT(*)
                     FROM programs p
@@ -41,14 +44,17 @@ class Programs:
                     count_query += """
                     WHERE LOWER(p.program_code) LIKE LOWER(%s)
                     OR LOWER(p.program_name) LIKE LOWER(%s)
+                    OR LOWER(c.college_name) LIKE LOWER(%s)
                     """
                     search_term = f"%{search}%"
-                    count_params.extend([search_term, search_term])
+                    count_params.extend([search_term, search_term, search_term])
 
                 cursor.execute(count_query, count_params)
                 total = cursor.fetchone()[0]
 
-                # Now get paginated results
+                # --------------------------------------------
+                # 2. MAIN QUERY
+                # --------------------------------------------
                 query = """
                     SELECT p.program_code, p.program_name, p.college_code, c.college_name
                     FROM programs p
@@ -60,27 +66,35 @@ class Programs:
                     query += """
                     WHERE LOWER(p.program_code) LIKE LOWER(%s)
                     OR LOWER(p.program_name) LIKE LOWER(%s)
+                    OR LOWER(c.college_name) LIKE LOWER(%s)
                     """
-                    params.extend([search_term, search_term])
+                    params.extend([search_term, search_term, search_term])
 
-                # Add sorting
-                if sort_by:
-                    sort_mapping = {
-                        'code': 'p.program_code',
-                        'name': 'p.program_name'
-                    }
-                    sort_column = sort_mapping.get(sort_by, 'p.program_code')
-                    query += f" ORDER BY {sort_column}"
-                else:
-                    query += " ORDER BY p.program_code"
+                # --------------------------------------------
+                # 3. SORTING
+                # --------------------------------------------
+                sort_mapping = {
+                    'code': 'p.program_code',
+                    'name': 'p.program_name',
+                    'college_name': 'c.college_name'
+                }
 
-                # Add pagination
+                sort_column = sort_mapping.get(sort_by, 'p.program_code')
+                query += f" ORDER BY {sort_column}"
+
+                # --------------------------------------------
+                # 4. PAGINATION
+                # --------------------------------------------
                 offset = (page - 1) * per_page
                 query += " LIMIT %s OFFSET %s"
                 params.extend([per_page, offset])
 
                 cursor.execute(query, params)
                 rows = cursor.fetchall()
+
+                # --------------------------------------------
+                # 5. BUILD RESPONSE
+                # --------------------------------------------
                 items = []
                 for r in rows:
                     items.append({
@@ -90,7 +104,7 @@ class Programs:
                         "college_name": r[3],
                     })
 
-                total_pages = (total + per_page - 1) // per_page  # Ceiling division
+                total_pages = (total + per_page - 1) // per_page
 
                 return {
                     'items': items,
@@ -99,6 +113,7 @@ class Programs:
                     'page': page,
                     'per_page': per_page
                 }
+
         finally:
             db_pool.putconn(conn)
 

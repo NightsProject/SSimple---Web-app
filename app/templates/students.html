@@ -189,6 +189,11 @@
                     <input type="file" class="form-control" id="editStudentProfilePicture" accept="image/*">
                     <div class="form-text">Accepted formats: PNG, JPG, JPEG, GIF. Leave empty to keep current picture.</div>
                     <div id="currentProfilePicture" class="mt-2"></div>
+                    <div id="clearPictureButton" class="mt-2" style="display: none;">
+                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="clearProfilePicture()">
+                            <i class="bi bi-trash"></i> Clear Picture
+                        </button>
+                    </div>
                 </div>
             </div>
             </form>
@@ -549,6 +554,7 @@ function editStudent(id_number) {
 
                 // Handle profile picture
                 const currentPicDiv = document.getElementById('currentProfilePicture');
+                const clearButtonDiv = document.getElementById('clearPictureButton');
                 if (student.file_link) {
                     currentPicDiv.innerHTML = `
                         <div class="d-flex align-items-center">
@@ -556,10 +562,14 @@ function editStudent(id_number) {
                             <small class="text-muted">Current profile picture</small>
                         </div>
                     `;
+                    clearButtonDiv.style.display = 'block';
                 } else {
                     currentPicDiv.innerHTML = '<small class="text-muted">No profile picture uploaded</small>';
+                    clearButtonDiv.style.display = 'none';
                 }
                 document.getElementById('editStudentProfilePicture').value = '';
+                // Reset clear flag
+                document.getElementById('editStudentModal').dataset.clearPicture = 'false';
 
                 document.getElementById('editStudentModal').dataset.originalId = id_number;
                 new bootstrap.Modal(document.getElementById('editStudentModal')).show();
@@ -596,6 +606,8 @@ function updateStudent() {
         'X-CSRFToken': csrfToken,
     };
 
+    const clearPicture = document.getElementById('editStudentModal').dataset.clearPicture === 'true';
+
     if (profile_picture) {
         // Use FormData for file upload
         const formData = new FormData();
@@ -606,12 +618,15 @@ function updateStudent() {
         formData.append('year', year);
         formData.append('gender', gender);
         formData.append('profile_picture', profile_picture);
+        if (clearPicture) {
+            formData.append('clear_picture', 'True');
+        }
         body = formData;
         // Don't set Content-Type for FormData, let browser set it with boundary
     } else {
         // Use JSON for non-file updates
         headers['Content-Type'] = 'application/json';
-        body = JSON.stringify({ id_number, first_name, last_name, program_code, year, gender });
+        body = JSON.stringify({ id_number, first_name, last_name, program_code, year, gender, clear_picture: clearPicture });
     }
 
     fetch(`/api/students/${encodeURIComponent(originalId)}`, {
@@ -750,6 +765,20 @@ function showStudentDetails(id_number) {
             console.error('Error:', error);
             showNotification('An error occurred while fetching student details.', 'danger');
         });
+}
+
+function clearProfilePicture() {
+    // Set the clear flag
+    document.getElementById('editStudentModal').dataset.clearPicture = 'true';
+
+    // Hide the current picture display and clear button
+    document.getElementById('currentProfilePicture').innerHTML = '<small class="text-muted">Picture will be cleared</small>';
+    document.getElementById('clearPictureButton').style.display = 'none';
+
+    // Clear the file input
+    document.getElementById('editStudentProfilePicture').value = '';
+
+    showNotification('Profile picture will be cleared when you update the student.', 'info');
 }
 
 function showNotification(message, type) {

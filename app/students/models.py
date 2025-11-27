@@ -3,7 +3,7 @@ from datetime import datetime
 
 
 class Students:
-    def __init__(self, id_number=None, first_name=None, last_name=None, year=None, gender=None, program_code=None, file_link=None):
+    def __init__(self, id_number=None, first_name=None, last_name=None, year=None, gender=None, program_code=None, file_link=None, clear_picture=False):
         self.id_number = id_number
         self.first_name = first_name
         self.last_name = last_name
@@ -11,6 +11,7 @@ class Students:
         self.year = year
         self.gender = gender
         self.file_link = file_link
+        self.clear_picture = clear_picture
 
     def add(self):
         conn = db_pool.getconn()
@@ -83,7 +84,10 @@ class Students:
         conn = db_pool.getconn()
         try:
             with conn.cursor() as cursor:
-                # First, get total count for pagination
+
+                # --------------------------------------------
+                # 1. COUNT QUERY
+                # --------------------------------------------
                 count_query = """
                     SELECT COUNT(*)
                     FROM students s
@@ -94,20 +98,32 @@ class Students:
 
                 if search:
                     count_query += """
-                    WHERE LOWER(s.id_number) LIKE LOWER(%s)
-                    OR LOWER(s.first_name) LIKE LOWER(%s)
-                    OR LOWER(s.last_name) LIKE LOWER(%s)
+                    WHERE 
+                        LOWER(s.id_number) LIKE LOWER(%s)
+                        OR LOWER(s.first_name) LIKE LOWER(%s)
+                        OR LOWER(s.last_name) LIKE LOWER(%s)
+                        OR LOWER(s.program_code) LIKE LOWER(%s)
+                        OR LOWER(s.year_level::text) LIKE LOWER(%s)
+                        OR LOWER(s.gender) LIKE LOWER(%s)
+                        OR LOWER(p.program_name) LIKE LOWER(%s)
                     """
                     search_term = f"%{search}%"
-                    count_params.extend([search_term, search_term, search_term])
+                    count_params.extend([
+                        search_term, search_term, search_term,
+                        search_term, search_term, search_term,
+                        search_term
+                    ])
 
                 cursor.execute(count_query, count_params)
                 total = cursor.fetchone()[0]
 
-                # Now get paginated results
+                # --------------------------------------------
+                # 2. MAIN QUERY
+                # --------------------------------------------
                 query = """
                     SELECT s.id_number, s.first_name, s.last_name, s.program_code,
-                           s.year_level, s.gender, p.program_name, c.college_name, s.date_registered, s.file_link
+                        s.year_level, s.gender, p.program_name, c.college_name,
+                        s.date_registered, s.file_link
                     FROM students s
                     LEFT JOIN programs p ON s.program_code = p.program_code
                     LEFT JOIN colleges c ON p.college_code = c.college_code
@@ -116,34 +132,46 @@ class Students:
 
                 if search:
                     query += """
-                    WHERE LOWER(s.id_number) LIKE LOWER(%s)
-                    OR LOWER(s.first_name) LIKE LOWER(%s)
-                    OR LOWER(s.last_name) LIKE LOWER(%s)
+                    WHERE 
+                        LOWER(s.id_number) LIKE LOWER(%s)
+                        OR LOWER(s.first_name) LIKE LOWER(%s)
+                        OR LOWER(s.last_name) LIKE LOWER(%s)
+                        OR LOWER(s.program_code) LIKE LOWER(%s)
+                        OR LOWER(s.year_level::text) LIKE LOWER(%s)
+                        OR LOWER(s.gender) LIKE LOWER(%s)
+                        OR LOWER(p.program_name) LIKE LOWER(%s)
                     """
-                    params.extend([search_term, search_term, search_term])
+                    params.extend([
+                        search_term, search_term, search_term,
+                        search_term, search_term, search_term,
+                        search_term
+                    ])
 
-                # Add sorting
-                if sort_by:
-                    sort_mapping = {
-                        'id': 's.id_number',
-                        'first_name': 's.first_name',
-                        'last_name': 's.last_name',
-                        'program': 'p.program_name',
-                        'year': 's.year_level',
-                        'gender': 's.gender'
-                    }
-                    sort_column = sort_mapping.get(sort_by, 's.id_number')
-                    query += f" ORDER BY {sort_column}"
-                else:
-                    query += " ORDER BY s.id_number"
+                # --------------------------------------------
+                # 3. SORTING
+                # --------------------------------------------
+                sort_mapping = {
+                    'id': 's.id_number',
+                    'first_name': 's.first_name',
+                    'last_name': 's.last_name',
+                    'program': 'p.program_name',
+                    'year': 's.year_level',
+                    'gender': 's.gender'
+                }
 
-                # Add pagination
+                sort_column = sort_mapping.get(sort_by, 's.id_number')
+                query += f" ORDER BY {sort_column}"
+
+                # --------------------------------------------
+                # 4. PAGINATION
+                # --------------------------------------------
                 offset = (page - 1) * per_page
                 query += " LIMIT %s OFFSET %s"
                 params.extend([per_page, offset])
 
                 cursor.execute(query, params)
                 rows = cursor.fetchall()
+
                 items = []
                 for r in rows:
                     items.append({
@@ -159,7 +187,7 @@ class Students:
                         "file_link": r[9]
                     })
 
-                total_pages = (total + per_page - 1) // per_page  # Ceiling division
+                total_pages = (total + per_page - 1) // per_page
 
                 return {
                     'items': items,
@@ -168,6 +196,7 @@ class Students:
                     'page': page,
                     'per_page': per_page
                 }
+
         finally:
             db_pool.putconn(conn)
 
@@ -206,11 +235,11 @@ class Students:
             db_pool.putconn(conn)
 
     @staticmethod
-    def update(original_id, new_id, first_name, last_name, program_code, year, gender, file_link=None):
+    def update(original_id, new_id, first_name, last_name, program_code, year, gender, file_link=None, clear_picture=False):
         conn = db_pool.getconn()
         try:
             with conn.cursor() as cursor:
-                if file_link is not None:
+                if clear_picture:
                     cursor.execute(
                         """
                         UPDATE students
@@ -219,17 +248,29 @@ class Students:
                         WHERE id_number = %s
                         """,
                         (new_id, first_name, last_name, program_code, year, gender, file_link, original_id)
-                    )
-                else:
-                    cursor.execute(
-                        """
-                        UPDATE students
-                        SET id_number = %s, first_name = %s, last_name = %s,
-                            program_code = %s, year_level = %s, gender = %s
-                        WHERE id_number = %s
-                        """,
-                        (new_id, first_name, last_name, program_code, year, gender, original_id)
-                    )
+                )
+                else: 
+                    if file_link is not None:
+                        cursor.execute(
+                            """
+                            UPDATE students
+                            SET id_number = %s, first_name = %s, last_name = %s,
+                                program_code = %s, year_level = %s, gender = %s, file_link = %s
+                            WHERE id_number = %s
+                            """,
+                            (new_id, first_name, last_name, program_code, year, gender, file_link, original_id)
+                        )
+                    else:
+                        cursor.execute(
+                            """
+                            UPDATE students
+                            SET id_number = %s, first_name = %s, last_name = %s,
+                                program_code = %s, year_level = %s, gender = %s
+                            WHERE id_number = %s
+                            """,
+                            (new_id, first_name, last_name, program_code, year, gender, original_id)
+                        )
+                
                 updated = cursor.rowcount
                 conn.commit()
                 return updated
