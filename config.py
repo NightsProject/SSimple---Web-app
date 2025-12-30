@@ -10,3 +10,5 @@ BOOTSTRAP_SERVE_LOCAL = getenv("BOOTSTRAP_SERVE_LOCAL")
 SUPABASE_URL = getenv("SUPABASE_URL")
 SUPABASE_ANON_KEY = getenv("SUPABASE_ANON_KEY")
 SUPABASE_BUCKET_NAME = getenv("SUPABASE_BUCKET_NAME", "profile-pictures")
+MAX_FILE_SIZE = int(getenv("MAX_FILE_SIZE", "3145728"))  # Default restriction: 3MB in bytes (5 * 1024 * 1024)
+

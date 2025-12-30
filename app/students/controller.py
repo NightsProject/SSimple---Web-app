@@ -3,7 +3,7 @@ from flask import render_template, request, jsonify, session, redirect, url_for,
 from .forms import StudentForm
 from .models import Students
 from ..programs.models import Programs
-from config import SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_BUCKET_NAME
+from config import SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_BUCKET_NAME, MAX_FILE_SIZE
 from supabase import create_client, Client
 
 
@@ -394,6 +394,15 @@ def api_create_student():
             if '.' not in profile_picture.filename or profile_picture.filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
                 return jsonify({'success': False, 'error': 'Invalid file type. Only PNG, JPG, JPEG, GIF allowed.'}), 400
 
+            # Validate file size
+            profile_picture.seek(0, 2)
+            file_size = profile_picture.tell() 
+            profile_picture.seek(0)  
+            
+            if file_size > MAX_FILE_SIZE:
+                max_size_mb = MAX_FILE_SIZE / (1024 * 1024)
+                return jsonify({'success': False, 'error': f'File size too large. Maximum allowed size is {max_size_mb:.1f}MB.'}), 400
+
             # Upload to Supabase - rename file to student ID
             file_extension = profile_picture.filename.rsplit('.', 1)[1].lower()
             filename = f"{id_number}.{file_extension}"
@@ -522,6 +531,15 @@ def api_update_student(id_number):
             allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
             if '.' not in profile_picture.filename or profile_picture.filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
                 return jsonify({'success': False, 'error': 'Invalid file type. Only PNG, JPG, JPEG, GIF allowed.'}), 400
+
+            # Validate file size
+            profile_picture.seek(0, 2)
+            file_size = profile_picture.tell()
+            profile_picture.seek(0)
+            
+            if file_size > MAX_FILE_SIZE:
+                max_size_mb = MAX_FILE_SIZE / (1024 * 1024)
+                return jsonify({'success': False, 'error': f'File size too large. Maximum allowed size is {max_size_mb:.1f}MB.'}), 400
 
             # Upload to Supabase - rename file to student ID
             file_extension = profile_picture.filename.rsplit('.', 1)[1].lower()
