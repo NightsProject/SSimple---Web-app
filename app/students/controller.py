@@ -380,7 +380,7 @@ def api_create_student():
         # Check if student already exists
         existing = Students.get_by_id(id_number)
         if existing:
-            return jsonify({'success': False, 'error': 'Student with this ID already exists'}), 409
+            return jsonify({'success': False, 'error': 'Student ID already exists'}), 409
 
         # Validate year
         if year not in ['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year']:
@@ -503,7 +503,7 @@ def api_update_student(id_number):
         if new_id != id_number:
             existing = Students.get_by_id(new_id)
             if existing:
-                return jsonify({'success': False, 'error': 'Student with new ID already exists'}), 409
+                return jsonify({'success': False, 'error': 'Student ID already exists'}), 409
 
         # Validate year
         if year not in ['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year']:
