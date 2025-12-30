@@ -1,7 +1,7 @@
 from . import programs_bp
 from flask import render_template, session, redirect, url_for, request, flash, jsonify
 from .models import Programs
-from .forms import ProgramForm
+from .forms import ProgramForm, ProgramUpdateForm
 from app.colleges.models import Colleges
 
 
@@ -222,6 +222,19 @@ def api_create_program():
         if not data or 'code' not in data or 'name' not in data or 'college_code' not in data:
             return jsonify({'success': False, 'error': 'Missing required fields: code, name, and college_code'}), 400
 
+        program_form = ProgramForm(data=data)
+        colleges_list = Colleges.get_all_list()
+        # populate select choices from available colleges (no empty option)
+        choices = [(c['code'], f"{c['code']} - {c['name']}") for c in colleges_list]
+        program_form.college_code.choices = choices
+
+        if not program_form.validate():
+            first_error = next(iter(program_form.errors.values()))[0]
+            return jsonify({
+                'success': False,
+                'error': first_error
+            }), 400
+
         code = data['code'].strip()
         name = data['name'].strip()
         college_code = data['college_code'].strip()
@@ -261,6 +274,20 @@ def api_update_program(code):
         data = request.get_json()
         if not data or 'name' not in data or 'college_code' not in data:
             return jsonify({'success': False, 'error': 'Missing required fields: name and college_code'}), 400
+
+        program_form = ProgramUpdateForm(data=data)
+        colleges_list = Colleges.get_all_list()
+        # populate select choices from available colleges (no empty option)
+        choices = [(c['code'], f"{c['code']} - {c['name']}") for c in colleges_list]
+        program_form.college_code.choices = choices
+
+        if not program_form.validate():
+            first_error = next(iter(program_form.errors.values()))[0]
+            return jsonify({
+                'success': False,
+                'error': first_error
+            }), 400
+
 
         new_name = data['name'].strip()
         new_code = data.get('code', code).strip()

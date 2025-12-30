@@ -13,8 +13,16 @@ class CollegeForm(FlaskForm):
     code = StringField("College Code", validators=[
         DataRequired(),
         Length(max=10),
-        Regexp(r'^[a-zA-Z0-9]+$', message="College code must contain only alphanumeric characters."),
+        Regexp(r'^[a-zA-Z]+$', message="College code must contain only alphanumeric characters."),
         validate_college_code_uniqueness
     ])
     name = StringField("College Name", validators=[DataRequired(), Length(max=100)])
-    submit = SubmitField("Save College")
+
+
+class CollegeUpdateForm(FlaskForm):
+    code = StringField("College Code", validators=[
+        DataRequired(),
+        Length(max=10),
+        Regexp(r'^[a-zA-Z]+$', message="College code must contain only alphanumeric characters."),
+    ])
+    name = StringField("College Name", validators=[DataRequired(), Length(max=100)])

@@ -368,23 +368,22 @@ def api_create_student():
         if not all([id_number, first_name, last_name, program_code, gender]) or year is None:
             return jsonify({'success': False, 'error': 'All fields must be non-empty'}), 400
 
-        # Validate gender
-        if gender not in ['Male', 'Female', 'Other']:
-            return jsonify({'success': False, 'error': 'Gender must be Male, Female, or Other'}), 400
-
-        # Check if program exists
-        program = Programs.get_by_code(program_code)
-        if not program:
-            return jsonify({'success': False, 'error': 'Program not found'}), 404
-
         # Check if student already exists
         existing = Students.get_by_id(id_number)
         if existing:
             return jsonify({'success': False, 'error': 'Student ID already exists'}), 409
 
-        # Validate year
-        if year not in ['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year']:
-            return jsonify({'success': False, 'error': 'Year must be one of: 1st Year, 2nd Year, 3rd Year, 4th Year, 5th Year'}), 400
+        # prepare add/edit form and program choices so modal options are available on page load
+        form = StudentForm()
+        programs = Programs.get_all_list()
+        form.program_code.choices = [(p['code'], f"{p['code']} - {p['name']}") for p in programs]
+
+        if not form.validate():
+            first_error = next(iter(form.errors.values()))[0]
+            return jsonify({
+                'success': False,
+                'error': first_error
+            }), 400
 
         # Handle profile picture upload
         file_link = None
@@ -490,14 +489,17 @@ def api_update_student(id_number):
         if not all([first_name, last_name, program_code, gender]) or year is None:
             return jsonify({'success': False, 'error': 'All fields must be non-empty'}), 400
 
-        # Validate gender
-        if gender not in ['Male', 'Female', 'Other']:
-            return jsonify({'success': False, 'error': 'Gender must be Male, Female, or Other'}), 400
+        # prepare add/edit form and program choices so modal options are available on page load
+        form = StudentForm()
+        programs = Programs.get_all_list()
+        form.program_code.choices = [(p['code'], f"{p['code']} - {p['name']}") for p in programs]
 
-        # Check if program exists
-        program = Programs.get_by_code(program_code)
-        if not program:
-            return jsonify({'success': False, 'error': 'Program not found'}), 404
+        if not form.validate():
+            first_error = next(iter(form.errors.values()))[0]
+            return jsonify({
+                'success': False,
+                'error': first_error
+            }), 400
 
         # Check if target ID already exists (if changing ID)
         if new_id != id_number:

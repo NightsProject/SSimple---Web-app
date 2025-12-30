@@ -1,7 +1,7 @@
 from . import colleges_bp
 from flask import render_template, session, redirect, url_for, request, flash, jsonify
 from .models import Colleges
-from .forms import CollegeForm
+from .forms import CollegeForm, CollegeUpdateForm
 
 
 @colleges_bp.route('/colleges')
@@ -194,6 +194,15 @@ def api_create_college():
         if not data or 'code' not in data or 'name' not in data:
             return jsonify({'success': False, 'error': 'Missing required fields: code and name'}), 400
 
+        form = CollegeForm(data=data)
+
+        if not form.validate():
+            first_error = next(iter(form.errors.values()))[0]
+            return jsonify({
+                'success': False,
+                'error': first_error
+            }), 400
+
         code = data['code'].strip()
         name = data['name'].strip()
 
@@ -227,6 +236,15 @@ def api_update_college(code):
         data = request.get_json()
         if not data or 'name' not in data:
             return jsonify({'success': False, 'error': 'Missing required field: name'}), 400
+
+        form = CollegeUpdateForm(data=data)
+
+        if not form.validate():
+            first_error = next(iter(form.errors.values()))[0]
+            return jsonify({
+                'success': False,
+                'error': first_error
+            }), 400
 
         new_name = data['name'].strip()
         new_code = data.get('code', code).strip()

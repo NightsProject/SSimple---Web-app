@@ -2,7 +2,7 @@ from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, SelectField, SubmitField, HiddenField
 from wtforms.validators import DataRequired, Length, Regexp, ValidationError, Optional
-from os import getenv
+from config import MAX_FILE_SIZE
 
 
 def validate_program_code(form, field):
@@ -14,8 +14,8 @@ def validate_program_code(form, field):
 def validate_file_size(form, field):
     """Custom validator to check file size limit."""
     if field.data:
-        # Get file size limit from environment or use default (5MB)
-        max_file_size = int(getenv("MAX_FILE_SIZE", "5242880"))  # 5MB in bytes
+        # Get file size limit from environment or use default (3MB)
+        max_file_size = MAX_FILE_SIZE 
         
         # Get file size in bytes
         field.data.seek(0, 2)  # Seek to end of file
@@ -34,12 +34,6 @@ class StudentForm(FlaskForm):
         Regexp(r'^\d{4}-\d{4}$', message="ID Number must be in the format YYYY-XXXX.")
     ])
 
-    # Year prefix used for the ID (format YEAR-XXXX). Default is set in controller to current year.
-    id_year = StringField("ID Year", validators=[
-        DataRequired(),
-        Length(min=4, max=4),
-        Regexp(r'^\d{4}$', message="ID Year must be exactly 4 digits.")
-    ])
     first_name = StringField("First Name", validators=[
         DataRequired(),
         Length(max=50),
@@ -69,4 +63,3 @@ class StudentForm(FlaskForm):
         FileAllowed(['png', 'jpg', 'jpeg', 'gif'], 'Images only!'),
         validate_file_size
     ])
-    submit = SubmitField("Save Student")
